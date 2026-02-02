@@ -320,24 +320,13 @@ function registerEventListeners() {
     // ----------------------------------------
     // [검색 기능 추가]
     // ----------------------------------------
-    const searchToggleBtn = document.getElementById('searchToggleBtn');
-    const searchContainer = document.getElementById('searchContainer');
+    // ----------------------------------------
+    // [검색 기능] 상시 노출로 변경됨
+    // ----------------------------------------
     const searchInput = document.getElementById('searchInput');
 
-    // 검색 버튼이 존재하는지 확인 (admin.html 등에는 없을 수 있음)
-    if (searchToggleBtn && searchContainer && searchInput) {
-        searchToggleBtn.addEventListener('click', () => {
-            if (searchContainer.style.display === 'none') {
-                searchContainer.style.display = 'block';
-                searchInput.focus();
-            } else {
-                searchContainer.style.display = 'none';
-                searchInput.value = ''; // 검색어 초기화
-                renderMenuList(currentCategory); // 목록 초기화
-            }
-        });
-
-        // 검색어 입력 이벤트
+    // 검색 입력창이 있으면 이벤트 등록
+    if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const keyword = e.target.value.trim();
             renderMenuList(currentCategory, keyword);
