@@ -173,8 +173,10 @@ function renderMenuList(category, keyword = '') {
         tempButtons.style.display = 'none'; // 기본적으로 숨김
         tempButtons.id = `temp-${index}`;
 
-        // ICE Only 카테고리 확인
-        const isIceOnly = ['에이드&주스', '스무디&프라페'].includes(item.category);
+        // ICE Only 조건 강화 (카테고리 + 이름 포함 여부)
+        const iceOnlyKeywords = ['아이스티', '주스', '에이드', '스무디', '프라페', '콜드브루'];
+        const isIceOnly = ['에이드&주스', '스무디&프라페'].includes(item.category) ||
+            iceOnlyKeywords.some(keyword => item.name.includes(keyword));
 
         const iceBtn = document.createElement('button');
         iceBtn.type = 'button';
