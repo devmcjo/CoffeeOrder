@@ -105,6 +105,10 @@ function renderCategoryButtons() {
 /**
  * 메뉴 리스트를 렌더링
  * @param {string} category - 표시할 카테고리 ('전체'면 모든 메뉴 표시)
+ */
+/**
+ * 메뉴 리스트를 렌더링
+ * @param {string} category - 표시할 카테고리 ('전체'면 모든 메뉴 표시)
  * @param {string} keyword - 검색어 (옵션)
  */
 function renderMenuList(category, keyword = '') {
@@ -173,10 +177,11 @@ function renderMenuList(category, keyword = '') {
         tempButtons.style.display = 'none'; // 기본적으로 숨김
         tempButtons.id = `temp-${index}`;
 
-        // ICE Only 조건 강화 (카테고리 + 이름 포함 여부)
-        const iceOnlyKeywords = ['아이스티', '주스', '에이드', '스무디', '프라페', '콜드브루'];
+        // ICE Only 조건: 
+        // 1. 카테고리가 '에이드&주스', '스무디&프라페'인 경우
+        // 2. 카테고리가 '티'이면서 이름에 '아이스티'가 포함된 경우
         const isIceOnly = ['에이드&주스', '스무디&프라페'].includes(item.category) ||
-            iceOnlyKeywords.some(keyword => item.name.includes(keyword));
+            (item.category === '티' && item.name.includes('아이스티'));
 
         const iceBtn = document.createElement('button');
         iceBtn.type = 'button';
@@ -198,6 +203,7 @@ function renderMenuList(category, keyword = '') {
             hotBtn.style.opacity = '0.5';
             hotBtn.style.cursor = 'not-allowed';
             hotBtn.title = '아이스 전용 메뉴입니다.';
+            // 강제 active 제거 및 ICE 활성화는 아래 이벤트에서 보장
         }
 
         // 온도 버튼 클릭 이벤트
@@ -232,7 +238,7 @@ function renderMenuList(category, keyword = '') {
                     });
                 }
 
-                // ICE Only 자동 선택 강제
+                // ICE Only라면 ICE 자동 선택 및 HOT 비활성 시각화 유지
                 if (isIceOnly) {
                     iceBtn.classList.add('active');
                     hotBtn.classList.remove('active');
@@ -241,7 +247,7 @@ function renderMenuList(category, keyword = '') {
                 tempButtons.style.display = 'flex';
             } else {
                 tempButtons.style.display = 'none';
-                // 기본값으로 ICE 선택
+                // 기본값으로 ICE 선택 (상태 초기화)
                 iceBtn.classList.add('active');
                 hotBtn.classList.remove('active');
             }
@@ -311,27 +317,32 @@ function registerEventListeners() {
         window.location.href = 'favorites.html';
     });
 
-    // 검색 버튼 토글
+    // ----------------------------------------
+    // [검색 기능 추가]
+    // ----------------------------------------
     const searchToggleBtn = document.getElementById('searchToggleBtn');
     const searchContainer = document.getElementById('searchContainer');
     const searchInput = document.getElementById('searchInput');
 
-    searchToggleBtn.addEventListener('click', () => {
-        if (searchContainer.style.display === 'none') {
-            searchContainer.style.display = 'block';
-            searchInput.focus();
-        } else {
-            searchContainer.style.display = 'none';
-            searchInput.value = ''; // 검색어 초기화
-            renderMenuList(currentCategory); // 목록 초기화
-        }
-    });
+    // 검색 버튼이 존재하는지 확인 (admin.html 등에는 없을 수 있음)
+    if (searchToggleBtn && searchContainer && searchInput) {
+        searchToggleBtn.addEventListener('click', () => {
+            if (searchContainer.style.display === 'none') {
+                searchContainer.style.display = 'block';
+                searchInput.focus();
+            } else {
+                searchContainer.style.display = 'none';
+                searchInput.value = ''; // 검색어 초기화
+                renderMenuList(currentCategory); // 목록 초기화
+            }
+        });
 
-    // 검색어 입력 이벤트
-    searchInput.addEventListener('input', (e) => {
-        const keyword = e.target.value.trim();
-        renderMenuList(currentCategory, keyword);
-    });
+        // 검색어 입력 이벤트
+        searchInput.addEventListener('input', (e) => {
+            const keyword = e.target.value.trim();
+            renderMenuList(currentCategory, keyword);
+        });
+    }
 
     // 모달 닫기 버튼
     document.getElementById('closeCartBtn').addEventListener('click', () => {
@@ -427,9 +438,6 @@ function loadNames() {
             option.textContent = '기타 (직접 입력)';
             select.appendChild(option);
         }
-    }, (error) => {
-        console.error('이름 목록 로드 실패:', error);
-        // 이름 로드는 실패해도 치명적이지 않으므로 콘솔에만 출력하거나 조용히 넘어갈 수 있음
     });
 }
 
@@ -442,11 +450,7 @@ function loadUserFavorites() {
     favoritesRef.on('value', (snapshot) => {
         userFavorites = snapshot.val() || [];
         // 즐겨찾기 데이터가 변경되면 메뉴 리스트 다시 렌더링
-        console.log('즐겨찾기 로드 성공:', userFavorites); // 디버깅용
         renderMenuList(currentCategory);
-    }, (error) => {
-        console.error('즐겨찾기 로드 실패:', error);
-        alert(`❌ 즐겨찾기 데이터를 불러오지 못했습니다.\n원인: ${error.message || error.code}\n\n로컬 실행 시 firebase-config.js 설정이나 DB 권한을 확인해주세요.`);
     });
 }
 
@@ -459,9 +463,6 @@ function listenToCart() {
     ordersRef.on('value', (snapshot) => {
         const orders = snapshot.val() || {};
         renderCart(orders);
-    }, (error) => {
-        console.error('장바구니 로드 실패:', error);
-        alert(`❌ 주문 내역을 불러오지 못했습니다.\n원인: ${error.message || error.code}`);
     });
 }
 
