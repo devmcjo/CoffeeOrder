@@ -169,15 +169,32 @@ function renderMenuList(category) {
 // 저장 및 종료
 // ========================================
 
-function saveAndExit() {
-    const favoritesRef = getRef('favorites');
-    const newFavoritesList = Array.from(tempFavorites); // Set -> Array
+async function saveAndExit() {
+    try {
+        const updateBtn = document.getElementById('saveBtn');
+        updateBtn.disabled = true;
+        updateBtn.textContent = '저장 중...';
 
-    favoritesRef.set(newFavoritesList).then(() => {
-        alert('즐겨찾기가 저장되었습니다.');
+        if (!tempFavorites) {
+            throw new Error('데이터가 초기화되지 않았습니다.');
+        }
+
+        const favoritesRef = getRef('favorites');
+        const newFavoritesList = Array.from(tempFavorites); // Set -> Array
+
+        console.log('저장할 데이터:', newFavoritesList);
+
+        await favoritesRef.set(newFavoritesList);
+
+        alert('✅ 즐겨찾기가 저장되었습니다!\n메인 페이지 상단에 공유됩니다.');
         window.location.href = 'index.html';
-    }).catch(err => {
-        console.error(err);
-        alert('저장 중 오류가 발생했습니다.');
-    });
+
+    } catch (err) {
+        console.error('저장 실패:', err);
+        alert(`❌ 저장 중 오류가 발생했습니다.\n원인: ${err.message || err.code || err}`);
+
+        const updateBtn = document.getElementById('saveBtn');
+        updateBtn.disabled = false;
+        updateBtn.textContent = '💾 저장하고 돌아가기';
+    }
 }

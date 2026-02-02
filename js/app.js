@@ -117,31 +117,16 @@ function renderMenuList(category) {
         filteredMenu = MENU_DATA.filter(item => item.category === category);
     }
 
-    // 인기 메뉴 정의 (하드코딩)
-    const popularMenus = [
-        '아메리카노',
-        '디카페인 아메리카노',
-        '사과주스',
-        '복숭아아이스티',
-        '블루베리요거트스무디'
-    ];
-
-    // 정렬: 사용자 즐겨찾기 > 하드코딩 인기 메뉴 > 일반 메뉴 (이름순)
+    // 정렬: 즐겨찾기(전체 공유) > 일반 메뉴 (이름순)
     filteredMenu.sort((a, b) => {
-        const aUserFav = userFavorites.includes(a.name);
-        const bUserFav = userFavorites.includes(b.name);
-        const aPopular = popularMenus.includes(a.name);
-        const bPopular = popularMenus.includes(b.name);
+        const aFav = userFavorites.includes(a.name);
+        const bFav = userFavorites.includes(b.name);
 
-        // 1. 사용자 즐겨찾기 우선
-        if (aUserFav && !bUserFav) return -1;
-        if (!aUserFav && bUserFav) return 1;
+        // 1. 즐겨찾기 우선 상단 배치
+        if (aFav && !bFav) return -1;
+        if (!aFav && bFav) return 1;
 
-        // 2. 하드코딩 인기 메뉴 차선 (둘 다 즐겨찾기 아니거나 둘 다 즐겨찾기인 경우 - 사실 둘다 즐겨찾기면 이름순이 낫지만 로직상 여기로 옴)
-        if (aPopular && !bPopular) return -1;
-        if (!aPopular && bPopular) return 1;
-
-        // 3. 이름순 정렬
+        // 2. 이름순 정렬
         return a.name.localeCompare(b.name, 'ko');
     });
 
@@ -168,13 +153,12 @@ function renderMenuList(category) {
         label.textContent = item.name;
         label.className = 'menu-label';
 
-        // 사용자 즐겨찾기 또는 하드코딩 인기 메뉴 강조
+        // 즐겨찾기 메뉴 강조 (공유된 즐겨찾기)
         if (userFavorites.includes(item.name)) {
-            label.classList.add('user-favorite'); // CSS 추가 필요
+            label.classList.add('user-favorite');
             // 즐겨찾기 아이콘 추가
             label.innerHTML = `⭐ ${item.name}`;
-        } else if (popularMenus.includes(item.name)) {
-            label.classList.add('popular-menu');
+            div.classList.add('favorite-item-wrapper'); // 스타일링을 위한 클래스 추가
         }
 
         // ICE/HOT 선택 버튼 그룹

@@ -274,6 +274,14 @@ section h2 span {
     /* 진한 오렌지색 */
 }
 
+/* 즐겨찾기 항목 배경 강조 */
+.favorite-item-wrapper {
+    background-color: #fff9db;
+    border-radius: 8px;
+    padding: 5px;
+    margin-bottom: 12px;
+    border: 1px solid #ffeaa7;
+}
 
 /* ICE/HOT 온도 선택 버튼 */
 .temp-buttons {
