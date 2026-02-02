@@ -427,6 +427,9 @@ function loadNames() {
             option.textContent = '기타 (직접 입력)';
             select.appendChild(option);
         }
+    }, (error) => {
+        console.error('이름 목록 로드 실패:', error);
+        // 이름 로드는 실패해도 치명적이지 않으므로 콘솔에만 출력하거나 조용히 넘어갈 수 있음
     });
 }
 
@@ -439,7 +442,11 @@ function loadUserFavorites() {
     favoritesRef.on('value', (snapshot) => {
         userFavorites = snapshot.val() || [];
         // 즐겨찾기 데이터가 변경되면 메뉴 리스트 다시 렌더링
+        console.log('즐겨찾기 로드 성공:', userFavorites); // 디버깅용
         renderMenuList(currentCategory);
+    }, (error) => {
+        console.error('즐겨찾기 로드 실패:', error);
+        alert(`❌ 즐겨찾기 데이터를 불러오지 못했습니다.\n원인: ${error.message || error.code}\n\n로컬 실행 시 firebase-config.js 설정이나 DB 권한을 확인해주세요.`);
     });
 }
 
@@ -452,6 +459,9 @@ function listenToCart() {
     ordersRef.on('value', (snapshot) => {
         const orders = snapshot.val() || {};
         renderCart(orders);
+    }, (error) => {
+        console.error('장바구니 로드 실패:', error);
+        alert(`❌ 주문 내역을 불러오지 못했습니다.\n원인: ${error.message || error.code}`);
     });
 }
 
