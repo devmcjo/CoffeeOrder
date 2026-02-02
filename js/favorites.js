@@ -22,9 +22,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 2. Firebase 데이터 비동기 로드 및 UI 업데이트
     loadFavoritesData().then(() => {
-        // 데이터 로드 완료 후 현재 화면 업데이트 (체크 표시)
+        // 데이터 로드 완료 확인
+        console.log('Firebase 데이터 로드 완료:', Array.from(tempFavorites));
+
+        // 데이터 로드 완료 후 현재 화면 업데이트 (체크 표시 및 재정렬)
         renderMenuList(currentCategory);
-        console.log('즐겨찾기 데이터 로드 및 적용 완료');
+        console.log('UI 업데이트 완료');
     }).catch(err => {
         console.error('즐겨찾기 데이터 로딩 실패:', err);
         // 실패해도 메뉴 선택은 가능하도록 유지
@@ -52,8 +55,10 @@ function loadFavoritesData() {
         favoritesRef.once('value', (snapshot) => {
             clearTimeout(timeout); // 타임아웃 해제
             currentFavorites = snapshot.val() || [];
-            // Set으로 변환하여 관리
+
+            // Set으로 변환하여 관리 (중복 방지 및 빠른 조회)
             tempFavorites = new Set(currentFavorites);
+            console.log('로드된 즐겨찾기:', currentFavorites);
             resolve();
         }, (error) => {
             clearTimeout(timeout);
@@ -131,11 +136,12 @@ function renderMenuList(category) {
         const input = document.createElement('input');
         input.type = 'checkbox';
         input.className = 'favorite-checkbox';
-        input.id = `fav-${index}`;
+        input.id = `fav-${category}-${index}`; // ID 유니크하게 변경
         input.checked = isFavorite; // 상태 반영
 
         // 체크박스 변경 이벤트
         input.addEventListener('change', (e) => {
+            console.log('체크 변경:', item.name, e.target.checked);
             if (e.target.checked) {
                 tempFavorites.add(item.name);
                 div.classList.add('is-favorite');
@@ -146,10 +152,12 @@ function renderMenuList(category) {
         });
 
         const label = document.createElement('label');
-        label.htmlFor = `fav-${index}`;
+        label.htmlFor = `fav-${category}-${index}`;
         label.className = 'menu-label';
         label.textContent = item.name;
-        // 라벨 클릭 시 체크박스 토글은 기본 동작이므로 별도 처리 불필요
+        if (isFavorite) {
+            label.innerHTML = `⭐ ${item.name}`; // 별 아이콘 추가
+        }
 
         div.appendChild(input);
         div.appendChild(label);

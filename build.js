@@ -88,6 +88,18 @@ try {
             execSync('git remote get-url origin', { stdio: 'ignore' });
             execSync('git push origin main', { stdio: 'inherit' });
             console.log('✅ Git Push 완료!');
+
+            // 6. Firebase Hosting 배포
+            console.log('🔥 Firebase Hosting 배포 시작...');
+            try {
+                // firebase.cmd 사용 (Windows 호환성)
+                execSync('firebase.cmd deploy', { stdio: 'inherit' });
+                console.log('🎉 모든 작업이 완료되었습니다! (버전 업 + 커밋 + 푸시 + 배포)');
+            } catch (deployError) {
+                console.error('❌ Firebase 배포 실패:', deployError.message);
+                console.log('👉 "firebase.cmd deploy" 명령어로 수동 배포를 시도해보세요.');
+            }
+
         } catch (e) {
             console.log('⚠️ 원격 저장소(origin)가 설정되지 않아 Push는 건너뜁니다.');
             console.log('👉 "git remote add origin <url>" 명령어로 원격 저장소를 연결해주세요.');
