@@ -17,9 +17,17 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // 초기 로딩
+    // 1. UI 먼저 초기화 (사용자가 기다리지 않게 함)
+    initializeUI();
+
+    // 2. Firebase 데이터 비동기 로드 및 UI 업데이트
     loadFavoritesData().then(() => {
-        initializeUI();
+        // 데이터 로드 완료 후 현재 화면 업데이트 (체크 표시)
+        renderMenuList(currentCategory);
+        console.log('즐겨찾기 데이터 로드 및 적용 완료');
+    }).catch(err => {
+        console.error('즐겨찾기 데이터 로딩 실패:', err);
+        // 실패해도 메뉴 선택은 가능하도록 유지
     });
 
     // 버튼 이벤트
@@ -28,16 +36,29 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Firebase에서 즐겨찾기 데이터 로드 (한 번만 로드)
+ * Firebase에서 즐겨찾기 데이터 로드
+ * 3초 내에 응답 없으면 빈 배열로 진행
  */
 function loadFavoritesData() {
     return new Promise((resolve) => {
         const favoritesRef = getRef('favorites');
+
+        // 타임아웃 설정 (3초)
+        const timeout = setTimeout(() => {
+            console.warn('Firebase 응답 시간 초과, 빈 데이터로 시작합니다.');
+            resolve();
+        }, 3000);
+
         favoritesRef.once('value', (snapshot) => {
+            clearTimeout(timeout); // 타임아웃 해제
             currentFavorites = snapshot.val() || [];
-            // Set으로 변환하여 관리 (중복 방지 및 빠른 조회)
+            // Set으로 변환하여 관리
             tempFavorites = new Set(currentFavorites);
             resolve();
+        }, (error) => {
+            clearTimeout(timeout);
+            console.error('Firebase 읽기 오류:', error);
+            resolve(); // 에러 나도 진행
         });
     });
 }
