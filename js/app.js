@@ -105,8 +105,9 @@ function renderCategoryButtons() {
 /**
  * 메뉴 리스트를 렌더링
  * @param {string} category - 표시할 카테고리 ('전체'면 모든 메뉴 표시)
+ * @param {string} keyword - 검색어 (옵션)
  */
-function renderMenuList(category) {
+function renderMenuList(category, keyword = '') {
     const container = document.getElementById('menuList');
     const menuCount = document.getElementById('menuCount');
     container.innerHTML = '';
@@ -115,6 +116,11 @@ function renderMenuList(category) {
     let filteredMenu = MENU_DATA;
     if (category !== '전체') {
         filteredMenu = MENU_DATA.filter(item => item.category === category);
+    }
+
+    // 검색어 필터링
+    if (keyword) {
+        filteredMenu = filteredMenu.filter(item => item.name.includes(keyword));
     }
 
     // 정렬: 즐겨찾기(전체 공유) > 일반 메뉴 (이름순)
@@ -167,9 +173,12 @@ function renderMenuList(category) {
         tempButtons.style.display = 'none'; // 기본적으로 숨김
         tempButtons.id = `temp-${index}`;
 
+        // ICE Only 카테고리 확인
+        const isIceOnly = ['에이드&주스', '스무디&프라페'].includes(item.category);
+
         const iceBtn = document.createElement('button');
         iceBtn.type = 'button';
-        iceBtn.className = 'temp-btn temp-ice active';
+        iceBtn.className = 'temp-btn temp-ice active'; // 기본 ICE
         iceBtn.textContent = '🧊 ICE';
         iceBtn.dataset.temp = 'ICE';
         iceBtn.dataset.index = index;
@@ -181,6 +190,14 @@ function renderMenuList(category) {
         hotBtn.dataset.temp = 'HOT';
         hotBtn.dataset.index = index;
 
+        // ICE Only 처리
+        if (isIceOnly) {
+            hotBtn.disabled = true;
+            hotBtn.style.opacity = '0.5';
+            hotBtn.style.cursor = 'not-allowed';
+            hotBtn.title = '아이스 전용 메뉴입니다.';
+        }
+
         // 온도 버튼 클릭 이벤트
         iceBtn.addEventListener('click', () => {
             iceBtn.classList.add('active');
@@ -188,6 +205,7 @@ function renderMenuList(category) {
         });
 
         hotBtn.addEventListener('click', () => {
+            if (isIceOnly) return; // 클릭 방지
             hotBtn.classList.add('active');
             iceBtn.classList.remove('active');
         });
@@ -211,6 +229,13 @@ function renderMenuList(category) {
                         }
                     });
                 }
+
+                // ICE Only 자동 선택 강제
+                if (isIceOnly) {
+                    iceBtn.classList.add('active');
+                    hotBtn.classList.remove('active');
+                }
+
                 tempButtons.style.display = 'flex';
             } else {
                 tempButtons.style.display = 'none';
@@ -282,6 +307,28 @@ function registerEventListeners() {
     // 즐겨찾기 관리 버튼
     document.getElementById('manageFavoritesBtn').addEventListener('click', () => {
         window.location.href = 'favorites.html';
+    });
+
+    // 검색 버튼 토글
+    const searchToggleBtn = document.getElementById('searchToggleBtn');
+    const searchContainer = document.getElementById('searchContainer');
+    const searchInput = document.getElementById('searchInput');
+
+    searchToggleBtn.addEventListener('click', () => {
+        if (searchContainer.style.display === 'none') {
+            searchContainer.style.display = 'block';
+            searchInput.focus();
+        } else {
+            searchContainer.style.display = 'none';
+            searchInput.value = ''; // 검색어 초기화
+            renderMenuList(currentCategory); // 목록 초기화
+        }
+    });
+
+    // 검색어 입력 이벤트
+    searchInput.addEventListener('input', (e) => {
+        const keyword = e.target.value.trim();
+        renderMenuList(currentCategory, keyword);
     });
 
     // 모달 닫기 버튼
