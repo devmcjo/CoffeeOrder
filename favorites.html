@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>즐겨찾기 관리 - 메가커피</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 즐겨찾기 페이지 전용 스타일 */
+        .favorite-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: #ffd700;
+            /* 금색 */
+            cursor: pointer;
+        }
+
+        .menu-item.is-favorite {
+            background-color: #fff9db;
+            /* 연한 노란색 배경 */
+            border: 1px solid #ffd700;
+        }
+
+        .menu-item.is-favorite .menu-label {
+            font-weight: bold;
+            color: #d35400;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 헤더 -->
+    <header>
+        <h1>⭐ 즐겨찾기 관리</h1>
+        <p>자주 먹는 메뉴를 체크해주세요</p>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <main class="container">
+
+        <!-- 카테고리 필터 -->
+        <section class="category-section">
+            <h2>📂 카테고리</h2>
+            <div class="category-buttons" id="categoryButtons">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+        </section>
+
+        <!-- 메뉴 리스트 -->
+        <section class="menu-section">
+            <h2 id="menuListTitle">🥤 메뉴 선택 <span id="menuCount"></span></h2>
+            <div class="menu-list" id="menuList">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+        </section>
+
+        <!-- 하단 액션 버튼 -->
+        <section class="action-section">
+            <button id="saveBtn" class="btn-primary">💾 저장하고 돌아가기</button>
+            <button id="cancelBtn" class="btn-secondary">취소</button>
+        </section>
+    </main>
+
+    <!-- 푸터 -->
+    <footer>
+        <p>Build: 2026.02.02 | Ver 1.0.0.0</p>
+        <p>Developer: devmcjo@gmail.com</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- JavaScript 파일 -->
+    <script src="js/menu-data.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/version.js"></script>
+    <script src="js/favorites.js"></script>
+</body>
+
+</html>

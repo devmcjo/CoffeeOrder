@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메가커피 단체 주문</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- 헤더 -->
+    <header>
+        <h1>☕ 메가커피 단체 주문</h1>
+        <p>주문하실 음료를 선택해주세요</p>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <main class="container">
+        <!-- 이름 선택 영역 -->
+        <section class="name-section">
+            <div class="name-section-header">
+                <h2>👤 주문자 이름</h2>
+                <button id="manageNamesBtn" class="settings-btn" title="이름 관리">⚙️</button>
+            </div>
+            <select id="nameSelect" class="name-select">
+                <option value="">이름을 선택하세요</option>
+                <!-- Firebase에서 동적으로 로드됩니다 -->
+                <option value="custom">기타 (직접 입력)</option>
+            </select>
+            <input type="text" id="customName" class="custom-name-input" placeholder="이름을 입력하세요" style="display: none;"
+                maxlength="20">
+        </section>
+
+        <!-- 주문 모드 전환 -->
+        <section class="mode-section">
+            <label class="checkbox-label">
+                <input type="checkbox" id="multiOrderMode">
+                <span>여러 개 주문하기</span>
+            </label>
+        </section>
+
+        <!-- 카테고리 필터 -->
+        <section class="category-section">
+            <h2>📂 카테고리</h2>
+            <div class="category-buttons" id="categoryButtons">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+        </section>
+
+        <!-- 메뉴 리스트 -->
+        <section class="menu-section">
+            <div class="menu-section-header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin-bottom: 0;">🥤 음료 선택 <span id="menuCount"></span></h2>
+                <button id="manageFavoritesBtn" class="btn-secondary" style="padding: 5px 10px; font-size: 0.9rem;">⭐
+                    즐겨찾기 관리</button>
+            </div>
+            <div class="menu-list" id="menuList">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+        </section>
+
+        <!-- 주문 담기 버튼 -->
+        <section class="action-section">
+            <button id="addToCartBtn" class="btn-primary">🛒 주문 담기</button>
+            <button id="viewCartBtn" class="btn-secondary">📋 장바구니 보기</button>
+        </section>
+
+        <!-- 장바구니 영역 (모달) -->
+        <div id="cartModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🛒 장바구니</h2>
+                    <button class="close-btn" id="closeCartBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="cart-summary">
+                        <p>총 <span id="totalOrders">0</span>건 / <span id="totalDrinks">0</span>잔</p>
+                    </div>
+                    <div id="cartList" class="cart-list">
+                        <!-- Firebase에서 실시간으로 로드됩니다 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="clearCartBtn" class="btn-danger">🗑️ 전체 초기화</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer>
+        <p>Build: 2026.02.02 | Ver 1.0.0.0</p>
+        <p>Developer: devmcjo@gmail.com</p>
+    </footer>
+
+    <!-- Firebase SDK (CDN 방식) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- JavaScript 파일 로드 -->
+    <script src="js/menu-data.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/version.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

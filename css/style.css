@@ -1,0 +1,724 @@
+/**
+ * 메가커피 단체 주문 웹 애플리케이션 스타일시트
+ * 모바일 우선 반응형 디자인
+ * 프리미엄하고 현대적인 UI/UX
+ */
+
+/* 전역 스타일 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+}
+
+/* 헤더 */
+header {
+    text-align: center;
+    color: white;
+    margin-bottom: 30px;
+    animation: slideDown 0.5s ease-out;
+}
+
+header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+header p {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* 메인 컨테이너 */
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 30px 20px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* 섹션 공통 스타일 */
+section {
+    margin-bottom: 25px;
+}
+
+section h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #667eea;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+section h2 span {
+    font-size: 0.9rem;
+    color: #999;
+    font-weight: 400;
+}
+
+/* 이름 선택 영역 */
+.name-section {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.name-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.name-section-header h2 {
+    margin-bottom: 0;
+}
+
+.settings-btn {
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.settings-btn:hover {
+    background: #667eea;
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.name-select {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    font-size: 1rem;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.name-select:focus {
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.custom-name-input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.custom-name-input:focus {
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 체크박스 스타일 */
+.mode-section {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.checkbox-label span {
+    user-select: none;
+}
+
+/* 카테고리 버튼 */
+.category-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.category-btn {
+    padding: 10px 20px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #666;
+}
+
+.category-btn:hover {
+    background: #f5f7fa;
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.category-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.category-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* 메뉴 리스트 */
+.menu-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    padding: 15px;
+    background: #fafafa;
+    transition: all 0.3s ease;
+}
+
+.menu-list.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    background: #f0f0f0;
+}
+
+.menu-item-wrapper {
+    margin-bottom: 10px;
+}
+
+.menu-item {
+    padding: 12px;
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.menu-item:hover {
+    background: #f5f7fa;
+    transform: translateX(5px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.menu-item input[type="radio"],
+.menu-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.menu-item .menu-label {
+    flex: 1;
+    cursor: pointer;
+    font-size: 0.95rem;
+    user-select: none;
+}
+
+.menu-item .menu-label.popular-menu {
+    font-weight: 700;
+    color: #667eea;
+}
+
+.menu-item .menu-label.user-favorite {
+    font-weight: 900;
+    color: #FF8C00;
+    /* 진한 오렌지색 */
+}
+
+
+/* ICE/HOT 온도 선택 버튼 */
+.temp-buttons {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    justify-content: center;
+}
+
+.temp-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #666;
+}
+
+.temp-btn:hover {
+    border-color: #667eea;
+    background: #f5f7fa;
+}
+
+.temp-btn.active.temp-ice {
+    background: linear-gradient(135deg, #6DD5FA 0%, #2980B9 100%);
+    border-color: #2980B9;
+    color: white;
+    box-shadow: 0 2px 10px rgba(45, 128, 185, 0.3);
+}
+
+.temp-btn.active.temp-hot {
+    background: linear-gradient(135deg, #FF6B6B 0%, #EE5A6F 100%);
+    border-color: #EE5A6F;
+    color: white;
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+}
+
+/* 스크롤바 스타일 */
+.menu-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.menu-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.menu-list::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+.menu-list::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
+
+/* 버튼 스타일 */
+.action-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-primary {
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    padding: 12px;
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    padding: 12px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+/* 모달 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #667eea;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #999;
+    transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.cart-summary {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.cart-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.cart-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    transition: all 0.3s ease;
+    border-left: 4px solid #667eea;
+}
+
+.cart-item:hover {
+    background: #f0f0f0;
+    transform: translateX(5px);
+}
+
+.cart-item-content {
+    flex: 1;
+}
+
+.cart-item-name {
+    font-weight: 600;
+    color: #667eea;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.cart-item-drinks {
+    color: #666;
+    line-height: 1.6;
+}
+
+.delete-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.delete-btn:hover {
+    background: #ee5a6f;
+    transform: scale(1.1);
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 2px solid #f0f0f0;
+}
+
+/* 이름 관리 페이지 */
+.add-name-section {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+    border-radius: 15px;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.name-input {
+    flex: 1;
+    padding: 15px;
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    font-size: 1rem;
+}
+
+.name-input:focus {
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.names-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.name-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    border-left: 4px solid #667eea;
+}
+
+.name-item:hover {
+    background: #f0f0f0;
+    transform: translateX(5px);
+}
+
+.name-item-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 빈 상태 메시지 */
+.empty-message {
+    text-align: center;
+    color: #999;
+    padding: 40px 20px;
+    font-size: 1rem;
+}
+
+/* 로딩 스피너 */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+/* 푸터 */
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 30px;
+    color: white;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+footer p {
+    margin: 5px 0;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    .container {
+        padding: 20px 15px;
+    }
+
+    section h2 {
+        font-size: 1.1rem;
+    }
+
+    .category-buttons {
+        gap: 8px;
+    }
+
+    .category-btn {
+        padding: 8px 15px;
+        font-size: 0.85rem;
+    }
+
+    .input-group {
+        flex-direction: column;
+    }
+}
+
+/* 데스크톱 최적화 */
+@media (min-width: 768px) {
+    body {
+        padding: 40px;
+    }
+
+    .container {
+        padding: 40px;
+    }
+
+    .action-section {
+        flex-direction: row;
+    }
+}
