@@ -320,25 +320,7 @@ function registerEventListeners() {
         window.location.href = 'favorites.html';
     });
 
-    /**
- * 이름 선택 값에 따라 직접 입력창 노출 여부를 업데이트
- */
-    function updateNameInputVisibility() {
-        const nameSelect = document.getElementById('nameSelect');
-        const customInput = document.getElementById('customName');
-
-        if (!nameSelect || !customInput) return;
-
-        if (nameSelect.value === 'custom') {
-            customInput.style.display = 'block';
-        } else {
-            customInput.style.display = 'none';
-            if (nameSelect.value === '') {
-                customInput.value = '';
-            }
-        }
-    }
-
+    // ----------------------------------------
     // ----------------------------------------
     // [검색 기능 추가]
     // ----------------------------------------
@@ -369,6 +351,25 @@ function registerEventListeners() {
             document.getElementById('cartModal').classList.remove('show');
         }
     });
+}
+
+/**
+ * 이름 선택 값에 따라 직접 입력창 노출 여부를 업데이트
+ */
+function updateNameInputVisibility() {
+    const nameSelect = document.getElementById('nameSelect');
+    const customInput = document.getElementById('customName');
+
+    if (!nameSelect || !customInput) return;
+
+    if (nameSelect.value === 'custom') {
+        customInput.style.display = 'block';
+    } else {
+        customInput.style.display = 'none';
+        if (nameSelect.value === '') {
+            customInput.value = '';
+        }
+    }
 }
 
 /**
