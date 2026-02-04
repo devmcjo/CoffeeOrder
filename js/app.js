@@ -45,7 +45,19 @@ window.addEventListener('DOMContentLoaded', () => {
     // 자정 클리어 타이머 시작
     startMidnightClearTimer();
 
+    // 초기 UI 상태 체크 (뒤로가기 대응)
+    updateNameInputVisibility();
+
     // 초기 메뉴 비활성화 (이름 미선택 상태)
+    updateMenuState();
+});
+
+/**
+ * 뒤로가기(bfcache) 대응을 위한 전역 리스너
+ */
+window.addEventListener('pageshow', (event) => {
+    // 페이지가 캐시로부터 복구된 경우에도 UI 상태를 다시 체크
+    updateNameInputVisibility();
     updateMenuState();
 });
 
@@ -274,17 +286,8 @@ function renderMenuList(category, keyword = '') {
  */
 function registerEventListeners() {
     // 이름 선택 드롭다운
-    document.getElementById('nameSelect').addEventListener('change', (e) => {
-        const customInput = document.getElementById('customName');
-        if (e.target.value === 'custom') {
-            customInput.style.display = 'block';
-            customInput.focus();
-        } else {
-            customInput.style.display = 'none';
-            customInput.value = '';
-        }
-
-        // 메뉴 활성화/비활성화
+    document.getElementById('nameSelect').addEventListener('change', () => {
+        updateNameInputVisibility();
         updateMenuState();
     });
 
@@ -316,6 +319,25 @@ function registerEventListeners() {
     document.getElementById('manageFavoritesBtn').addEventListener('click', () => {
         window.location.href = 'favorites.html';
     });
+
+    /**
+ * 이름 선택 값에 따라 직접 입력창 노출 여부를 업데이트
+ */
+    function updateNameInputVisibility() {
+        const nameSelect = document.getElementById('nameSelect');
+        const customInput = document.getElementById('customName');
+
+        if (!nameSelect || !customInput) return;
+
+        if (nameSelect.value === 'custom') {
+            customInput.style.display = 'block';
+        } else {
+            customInput.style.display = 'none';
+            if (nameSelect.value === '') {
+                customInput.value = '';
+            }
+        }
+    }
 
     // ----------------------------------------
     // [검색 기능 추가]
