@@ -72,11 +72,14 @@ try {
     console.log('🚀 Git Commit & Push 진행 중...');
 
     try {
+        // 명령행 인자에서 커밋 메시지 요약 가져오기
+        const commitSummary = process.argv[2] || 'Update';
+
         // 모든 변경 사항 스테이징
         execSync('git add .', { stdio: 'inherit' });
 
-        // 커밋
-        const commitMessage = `Build: ${newVersion} (${todayStr})`;
+        // 커밋 메시지 형식 개선: [요약] Build: 버전
+        const commitMessage = `${commitSummary} | Build: ${newVersion}`;
         execSync(`git commit -m "${commitMessage}"`, { stdio: 'inherit' });
 
         // 푸시 (origin이 설정되어 있다고 가정)
