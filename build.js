@@ -43,28 +43,39 @@ try {
 
     const todayStr = `${year}.${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`;
 
-    // 3. 새 버전 번호 계산 (1.YY.M.Count)
-    let [major, verYear, verMonth, verCount] = currentVersion.split('.').map(Number);
+    // 3. 커밋 타입 및 메시지 추출
+    const fullMessage = process.argv[2] || 'feat : Update';
+    let prefix = 'feat';
+    let commitSummary = fullMessage;
 
-    if (verYear === Number(shortYear) && verMonth === month) {
-        // 같은 년/월이면 카운트 증가
-        verCount++;
-    } else {
-        // 년/월이 바뀌면 카운트 리셋 (및 년월 갱신)
-        verYear = Number(shortYear);
-        verMonth = month;
-        verCount = 1;
+    if (fullMessage.includes(' : ')) {
+        [prefix, commitSummary] = fullMessage.split(' : ').map(s => s.trim());
     }
 
-    const newVersion = `${major}.${verYear}.${verMonth}.${verCount}`;
+    const isDocs = prefix.toLowerCase() === 'docs';
+    let newVersion = currentVersion;
 
-    // 4. 파일 내용 업데이트
-    content = content.replace(versionRegex, `version: '${newVersion}'`);
-    content = content.replace(dateRegex, `date: '${todayStr}'`);
+    if (!isDocs) {
+        // 새 버전 번호 계산 (1.YY.M.Count)
+        let [major, verYear, verMonth, verCount] = currentVersion.split('.').map(Number);
 
-    fs.writeFileSync(versionFilePath, content, 'utf8');
+        if (verYear === Number(shortYear) && verMonth === month) {
+            verCount++;
+        } else {
+            verYear = Number(shortYear);
+            verMonth = month;
+            verCount = 1;
+        }
+        newVersion = `${major}.${verYear}.${verMonth}.${verCount}`;
 
-    console.log(`✅ Build Success!`);
+        // 4. 파일 내용 업데이트
+        content = content.replace(versionRegex, `version: '${newVersion}'`);
+        content = content.replace(dateRegex, `date: '${todayStr}'`);
+        fs.writeFileSync(versionFilePath, content, 'utf8');
+        console.log(`✅ Build Success! (Version up to ${newVersion})`);
+    } else {
+        console.log(`📝 Docs Update - Version remains ${newVersion}`);
+    }
     console.log(`📅 Date: ${todayStr}`);
     console.log(`🆙 Version: ${currentVersion} -> ${newVersion}`);
 
@@ -72,14 +83,15 @@ try {
     console.log('🚀 Git Commit & Push 진행 중...');
 
     try {
-        // 명령행 인자에서 커밋 메시지 요약 가져오기
-        const commitSummary = process.argv[2] || 'Update';
-
         // 모든 변경 사항 스테이징
         execSync('git add .', { stdio: 'inherit' });
 
-        // 커밋 메시지 형식 개선: [요약] Build: 버전
-        const commitMessage = `${commitSummary} | Build: ${newVersion}`;
+        // 커밋 메시지 형식 개선: prefix : summary | Build: 버전
+        let commitMessage = `${prefix} : ${commitSummary}`;
+        if (!isDocs) {
+            commitMessage += ` | Build: ${newVersion}`;
+        }
+
         execSync(`git commit -m "${commitMessage}"`, { stdio: 'inherit' });
 
         // 푸시 (origin이 설정되어 있다고 가정)
