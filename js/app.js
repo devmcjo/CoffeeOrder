@@ -136,7 +136,21 @@ function renderMenuList(category, keyword = '') {
 
     // 검색어 필터링
     if (keyword) {
-        filteredMenu = filteredMenu.filter(item => item.name.includes(keyword));
+        const lowerKeyword = keyword.toLowerCase();
+        const isChosungOnly = /^[ㄱ-ㅎ\s]+$/.test(keyword);
+
+        filteredMenu = filteredMenu.filter(item => {
+            const name = item.name.toLowerCase();
+
+            // 1. 일반 텍스트 포함 검색 (기본)
+            if (name.includes(lowerKeyword)) return true;
+
+            // 2. 초성 검색 (입력값이 초성으로만 구성된 경우 또는 항상 체크)
+            const nameChosung = getChosung(item.name);
+            if (nameChosung.includes(lowerKeyword)) return true;
+
+            return false;
+        });
     }
 
     // 정렬: 즐겨찾기(전체 공유) > 일반 메뉴 (이름순)
@@ -736,6 +750,29 @@ function startMidnightClearTimer() {
 // ========================================
 // 유틸리티 함수
 // ========================================
+
+/**
+ * 한글 문자열에서 초성을 추출합니다.
+ * @param {string} text - 초성을 추출할 대상 문자열
+ * @returns {string} 추출된 초성 문자열
+ */
+function getChosung(text) {
+    const chosungs = [
+        'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ',
+        'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
+    ];
+    let result = '';
+
+    for (let i = 0; i < text.length; i++) {
+        const code = text.charCodeAt(i) - 44032;
+        if (code > -1 && code < 11172) {
+            result += chosungs[Math.floor(code / 588)];
+        } else {
+            result += text.charAt(i);
+        }
+    }
+    return result;
+}
 
 /**
  * 페이지 언로드 시 정리 작업 (선택사항)
