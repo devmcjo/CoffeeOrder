@@ -45,7 +45,6 @@ try {
 
     // 3. 인자 분석
     const args = process.argv.slice(2);
-    const isDeploy = args.includes('--deploy');
     const messageArg = args.find(arg => arg !== '--deploy') || 'feat : Update';
 
     // 커밋 타입 및 메시지 추출
@@ -56,6 +55,8 @@ try {
         [prefix, commitSummary] = messageArg.split(' : ').map(s => s.trim());
     }
 
+    const isDeployPrefix = prefix.toLowerCase() === 'deploy';
+    const isDeploy = args.includes('--deploy') || isDeployPrefix;
     const isDocs = prefix.toLowerCase() === 'docs';
     let newVersion = currentVersion;
 
