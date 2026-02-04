@@ -671,25 +671,43 @@ function clearCart() {
 // ========================================
 
 /**
- * 자정에 자동으로 장바구니를 초기화하는 타이머 시작
+ * 자정 이후 + 마지막 주문으로부터 1시간 경과 시 자동으로 장바구니를 초기화하는 타이머 시작
  */
 function startMidnightClearTimer() {
-    // 1분마다 현재 시간 확인
+    // 1분마다 체크 수행 (서버 부하 방지)
     setInterval(() => {
         const now = new Date();
         const hours = now.getHours();
-        const minutes = now.getMinutes();
-        const seconds = now.getSeconds();
 
-        // 자정(00:00:00)인 경우 장바구니 초기화
-        if (hours === 0 && minutes === 0 && seconds === 0) {
-            console.log('자정 도달 - 장바구니 자동 초기화');
+        // 조건 1: 자정 이후인가? (0시 ~ 5시 사이)
+        if (hours >= 0 && hours < 5) {
             const ordersRef = getRef('orders');
-            ordersRef.remove().catch(error => {
-                console.error('자동 초기화 실패:', error);
+
+            ordersRef.once('value', (snapshot) => {
+                const orders = snapshot.val();
+                if (!orders) return; // 장바구니가 이미 비어있으면 종료
+
+                // 모든 주문 중 가장 최신 타임스탬프 찾기
+                let maxTimestamp = 0;
+                Object.values(orders).forEach(order => {
+                    if (order.timestamp > maxTimestamp) {
+                        maxTimestamp = order.timestamp;
+                    }
+                });
+
+                const oneHourMillis = 60 * 60 * 1000;
+                const currentTime = Date.now();
+
+                // 조건 2: 마지막 주문으로부터 1시간 이상 지났는가?
+                if (currentTime > maxTimestamp + oneHourMillis) {
+                    console.log('초기화 조건 만족 (자정 이후 & 1시간 유휴) - 장바구니 자동 초기화');
+                    ordersRef.remove().catch(error => {
+                        console.error('자동 초기화 실패:', error);
+                    });
+                }
             });
         }
-    }, 1000); // 1초마다 체크 (정확도를 위해)
+    }, 60000); // 1분마다 체크
 }
 
 // ========================================

@@ -1,0 +1,84 @@
+{
+  // UTF-8 Encoding Settings
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": false,
+  
+  // File-specific encoding overrides (ensuring UTF-8 for all file types)
+  "[javascript]": {
+    "files.encoding": "utf8"
+  },
+  "[javascriptreact]": {
+    "files.encoding": "utf8"
+  },
+  "[typescript]": {
+    "files.encoding": "utf8"
+  },
+  "[typescriptreact]": {
+    "files.encoding": "utf8"
+  },
+  "[html]": {
+    "files.encoding": "utf8"
+  },
+  "[css]": {
+    "files.encoding": "utf8"
+  },
+  "[json]": {
+    "files.encoding": "utf8"
+  },
+  "[jsonc]": {
+    "files.encoding": "utf8"
+  },
+  "[markdown]": {
+    "files.encoding": "utf8"
+  },
+  
+  // BOM (Byte Order Mark) 설정
+  "files.autoSaveDelay": 1000,
+  
+  // End of Line 설정 (일관성 유지)
+  "files.eol": "\n",
+  
+  // 터미널 인코딩 설정 (Windows 환경)
+  "terminal.integrated.env.windows": {
+    "PYTHONIOENCODING": "utf-8",
+    "CHCP": "65001"
+  },
+  
+  // Node.js 환경에서 UTF-8 사용 강제
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "terminal.integrated.profiles.windows": {
+    "Command Prompt": {
+      "path": "C:\\WINDOWS\\system32\\cmd.exe",
+      "args": ["/K", "chcp 65001"]
+    },
+    "PowerShell": {
+      "source": "PowerShell",
+      "args": ["-NoExit", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8"]
+    }
+  },
+  
+  // Git 인코딩 설정
+  "git.inputValidationLength": 72,
+  "git.inputValidationSubjectLength": 50,
+  
+  // 저장 시 자동 포맷팅 (인코딩 문제 방지)
+  "files.trimTrailingWhitespace": false,
+  "files.insertFinalNewline": false,
+  "files.trimFinalNewlines": false,
+  
+  // 에디터 설정
+  "editor.formatOnSave": false,
+  
+  // JavaScript 파일 인코딩 보장
+  "javascript.validate.enable": true,
+  
+  // HTML 파일 인코딩 보장
+  "html.format.enable": true,
+  
+  // 파일 감시 제외 (성능 최적화)
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/*/**": true
+  }
+}
