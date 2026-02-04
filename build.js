@@ -74,11 +74,8 @@ try {
         }
         newVersion = `${major}.${verYear}.${verMonth}.${verCount}`;
 
-        // 4. 파일 내용 업데이트
-        content = content.replace(versionRegex, `version: '${newVersion}'`);
-        content = content.replace(dateRegex, `date: '${todayStr}'`);
-        fs.writeFileSync(versionFilePath, content, 'utf8');
-        console.log(`✅ Build Success! (Version up to ${newVersion})`);
+        // newVersion/todayStr은 이미 계산됨. 파일 쓰기는Git 1단계 커밋 이후로 미룸.
+        console.log(`✅ Build Start! (Target Version: ${newVersion})`);
     } else {
         if (isDeploy && isDocs) {
             console.log(`📝 Docs Deploy - Version remains ${newVersion}`);
@@ -116,8 +113,14 @@ try {
             }
 
             // 2단계: 배포 커밋 (버전 업데이트 포함)
-            console.log(`🚀 2단계: 배포 커밋 및 태깅 진행 중... (Build: ${newVersion})`);
-            // 버전 파일은 이미 위에서 업데이트됨 (fs.writeFileSync)
+            console.log(`🚀 2단계: 배포 커밋 진행 중... (Build: ${newVersion})`);
+
+            // 이제 버전 파일을 디스크에 씀
+            const updatedContent = fs.readFileSync(versionFilePath, 'utf8')
+                .replace(/version:\s*'([^']+)'/, `version: '${newVersion}'`)
+                .replace(/date:\s*'([^']+)'/, `date: '${todayStr}'`);
+            fs.writeFileSync(versionFilePath, updatedContent, 'utf8');
+
             execSync('git add js/version.js', { stdio: 'inherit' });
             execSync(`git commit -m "deploy : 배포 | Build: ${newVersion}"`, { stdio: 'inherit' });
         } else {
