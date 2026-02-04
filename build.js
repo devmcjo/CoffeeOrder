@@ -43,19 +43,24 @@ try {
 
     const todayStr = `${year}.${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`;
 
-    // 3. 커밋 타입 및 메시지 추출
-    const fullMessage = process.argv[2] || 'feat : Update';
-    let prefix = 'feat';
-    let commitSummary = fullMessage;
+    // 3. 인자 분석
+    const args = process.argv.slice(2);
+    const isDeploy = args.includes('--deploy');
+    const messageArg = args.find(arg => arg !== '--deploy') || 'feat : Update';
 
-    if (fullMessage.includes(' : ')) {
-        [prefix, commitSummary] = fullMessage.split(' : ').map(s => s.trim());
+    // 커밋 타입 및 메시지 추출
+    let prefix = 'feat';
+    let commitSummary = messageArg;
+
+    if (messageArg.includes(' : ')) {
+        [prefix, commitSummary] = messageArg.split(' : ').map(s => s.trim());
     }
 
     const isDocs = prefix.toLowerCase() === 'docs';
     let newVersion = currentVersion;
 
-    if (!isDocs) {
+    // 배포 모드이면서 docs가 아닌 경우에만 버전 업데이트 수행
+    if (isDeploy && !isDocs) {
         // 새 버전 번호 계산 (1.YY.M.Count)
         let [major, verYear, verMonth, verCount] = currentVersion.split('.').map(Number);
 
@@ -74,8 +79,13 @@ try {
         fs.writeFileSync(versionFilePath, content, 'utf8');
         console.log(`✅ Build Success! (Version up to ${newVersion})`);
     } else {
-        console.log(`📝 Docs Update - Version remains ${newVersion}`);
+        if (isDeploy && isDocs) {
+            console.log(`📝 Docs Deploy - Version remains ${newVersion}`);
+        } else {
+            console.log(`📦 Commit Mode - Version remains ${newVersion}`);
+        }
     }
+
     console.log(`📅 Date: ${todayStr}`);
     console.log(`🆙 Version: ${currentVersion} -> ${newVersion}`);
 
@@ -86,43 +96,42 @@ try {
         // 모든 변경 사항 스테이징
         execSync('git add .', { stdio: 'inherit' });
 
-        // 커밋 메시지 형식 개선: prefix : summary | Build: 버전
+        // 커밋 메시지 구성
+        // 배포 모드이며 docs가 아닐 때만 버전을 메시지에 포함
         let commitMessage = `${prefix} : ${commitSummary}`;
-        if (!isDocs) {
+        if (isDeploy && !isDocs) {
             commitMessage += ` | Build: ${newVersion}`;
         }
 
         execSync(`git commit -m "${commitMessage}"`, { stdio: 'inherit' });
 
-        // 푸시 (origin이 설정되어 있다고 가정)
-        // 주의: 원격 저장소가 설정되지 않았거나 권한이 없으면 실패할 수 있음
+        // 푸시
         console.log('☁️ Pushing to remote...');
-        // execSync('git push origin main', { stdio: 'inherit' }); // 사용자 설정 전이므로 주석 처리 권장하나 요청사항이므로 시도
-        // 리모트가 있는지 확인
         try {
             execSync('git remote get-url origin', { stdio: 'ignore' });
             execSync('git push origin main', { stdio: 'inherit' });
             console.log('✅ Git Push 완료!');
 
-            // 6. Firebase Hosting 배포
-            console.log('🔥 Firebase Hosting 배포 시작...');
-            try {
-                // firebase.cmd 사용 (Windows 호환성)
-                execSync('firebase.cmd deploy', { stdio: 'inherit' });
-                console.log('🎉 모든 작업이 완료되었습니다! (버전 업 + 커밋 + 푸시 + 배포)');
-            } catch (deployError) {
-                console.error('❌ Firebase 배포 실패:', deployError.message);
-                console.log('👉 "firebase.cmd deploy" 명령어로 수동 배포를 시도해보세요.');
+            // 6. 배포 모드인 경우에만 Firebase Hosting 배포
+            if (isDeploy) {
+                console.log('🔥 Firebase Hosting 배포 시작...');
+                try {
+                    execSync('firebase.cmd deploy', { stdio: 'inherit' });
+                    console.log('🎉 모든 작업이 완료되었습니다! (버전 업 + 커밋 + 푸시 + 배포)');
+                } catch (deployError) {
+                    console.error('❌ Firebase 배포 실패:', deployError.message);
+                    console.log('👉 "firebase.cmd deploy" 명령어로 수동 배포를 시도해보세요.');
+                }
+            } else {
+                console.log('✨ Commit & Push 완료! (배포는 건너뜁니다)');
             }
 
         } catch (e) {
-            console.log('⚠️ 원격 저장소(origin)가 설정되지 않아 Push는 건너뜁니다.');
-            console.log('👉 "git remote add origin <url>" 명령어로 원격 저장소를 연결해주세요.');
+            console.log('⚠️ 원격 저장소(origin) 설정 확인 필요 또는 Push 실패');
         }
 
     } catch (gitError) {
         console.error('❌ Git 작업 중 오류 발생:', gitError.message);
-        // 빌드 자체는 성공했으므로 프로세스는 종료하지 않음
     }
 
 } catch (error) {
