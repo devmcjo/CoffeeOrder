@@ -97,14 +97,37 @@ try {
         // 모든 변경 사항 스테이징
         execSync('git add .', { stdio: 'inherit' });
 
-        // 커밋 메시지 구성
-        // 배포 모드이며 docs가 아닐 때만 버전을 메시지에 포함
-        let commitMessage = `${prefix} : ${commitSummary}`;
         if (isDeploy && !isDocs) {
-            commitMessage += ` | Build: ${newVersion}`;
-        }
+            // [배포 모드] 2단계 커밋 진행
 
-        execSync(`git commit -m "${commitMessage}"`, { stdio: 'inherit' });
+            // 1단계: 기능/수정 커밋 (변경 사항이 있는 경우만)
+            const firstPrefix = isDeployPrefix ? 'feat' : prefix;
+            const firstMessage = `${firstPrefix} : ${commitSummary}`;
+
+            try {
+                // 변경 사항이 있는지 확인
+                const status = execSync('git status --porcelain').toString();
+                if (status.trim() !== '') {
+                    console.log(`📝 1단계: 기능 커밋 진행 중... (${firstMessage})`);
+                    execSync(`git commit -m "${firstMessage}"`, { stdio: 'inherit' });
+                }
+            } catch (e) {
+                console.log('ℹ️ 커밋할 변경 사항이 없거나 이미 커밋되었습니다.');
+            }
+
+            // 2단계: 배포 커밋 (버전 업데이트 포함)
+            console.log(`🚀 2단계: 배포 커밋 및 태깅 진행 중... (Build: ${newVersion})`);
+            // 버전 파일은 이미 위에서 업데이트됨 (fs.writeFileSync)
+            execSync('git add js/version.js', { stdio: 'inherit' });
+            execSync(`git commit -m "deploy : 배포 | Build: ${newVersion}"`, { stdio: 'inherit' });
+        } else {
+            // [일반 커밋 모드] 1단계 커밋 진행
+            let commitMessage = `${prefix} : ${commitSummary}`;
+            if (isDeploy && isDocs) {
+                commitMessage += ` | Build: ${newVersion}`;
+            }
+            execSync(`git commit -m "${commitMessage}"`, { stdio: 'inherit' });
+        }
 
         // 푸시
         console.log('☁️ Pushing to remote...');
@@ -118,13 +141,13 @@ try {
                 console.log('🔥 Firebase Hosting 배포 시작...');
                 try {
                     execSync('firebase.cmd deploy', { stdio: 'inherit' });
-                    console.log('🎉 모든 작업이 완료되었습니다! (버전 업 + 커밋 + 푸시 + 배포)');
+                    console.log('🎉 모든 작업이 완료되었습니다! (기능 커밋 + 배포 커밋 + 푸시 + 배포)');
                 } catch (deployError) {
                     console.error('❌ Firebase 배포 실패:', deployError.message);
                     console.log('👉 "firebase.cmd deploy" 명령어로 수동 배포를 시도해보세요.');
                 }
             } else {
-                console.log('✨ Commit & Push 완료! (배포는 건너뜁니다)');
+                console.log('✨ Commit & Push 완료! (배포는 건너뜜)');
             }
 
         } catch (e) {
