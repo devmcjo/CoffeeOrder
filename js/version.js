@@ -3,7 +3,7 @@
  * build.js 스크립트에 의해 자동으로 업데이트됩니다.
  */
 const BUILD_INFO = {
-    version: '1.26.2.17',
+    version: '1.26.2.18',
     date: '2026.02.04'
 };
 
