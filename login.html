@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 로그인 - 메가커피 단체 주문</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-container {
+            max-width: 450px;
+            min-height: 400px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-input {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-btn {
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .back-btn {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .login-info-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .login-info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .login-info-box p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🔐 관리자 로그인</h1>
+        <p>관리자 또는 매니저 계정으로 로그인하세요</p>
+    </header>
+
+    <main class="container login-container">
+        <button class="back-btn" onclick="location.href='index.html'">← 메인으로 돌아가기</button>
+
+        <div class="login-info-box">
+            <h3>👤 로그인 안내</h3>
+            <p>관리자와 매니저만 구매 이력을 등록하거나<br>제거할 수 있습니다.</p>
+        </div>
+
+        <form class="login-form" id="loginForm" onsubmit="return false;">
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="form-group">
+                <label for="userId">아이디</label>
+                <input type="text" id="userId" class="form-input" placeholder="아이디를 입력하세요" maxlength="20">
+            </div>
+
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력하세요" maxlength="20">
+            </div>
+
+            <button type="submit" class="login-btn" onclick="handleLogin()">로그인</button>
+        </form>
+    </main>
+
+    <footer>
+        <p>Build: <span id="buildVersion">2026.02.26</span></p>
+        <p>Developer: devmcjo@gmail.com</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/version.js"></script>
+    <script>
+        // Firebase 초기화
+        initializeFirebase();
+
+        // 이미 로그인되어 있는지 확인
+        function checkAlreadyLoggedIn() {
+            const savedUser = localStorage.getItem('coffeeOrder_user');
+            const savedRole = localStorage.getItem('coffeeOrder_role');
+
+            if (savedUser && savedRole) {
+                // 이미 로그인되어 있으면 설정 페이지로 이동
+                location.href = 'settings.html';
+            }
+        }
+
+        // 페이지 로드 시 로그인 상태 확인
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAlreadyLoggedIn();
+        });
+
+        // 로그인 처리
+        function handleLogin() {
+            const userId = document.getElementById('userId').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+
+            // 입력 검증
+            if (!userId || !password) {
+                errorMessage.textContent = '아이디와 비밀번호를 모두 입력해주세요.';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            // 계정 확인
+            checkCredentials(userId, password)
+                .then((result) => {
+                    if (result.success) {
+                        // 로그인 성공 - 로컬 스토리지에 저장
+                        localStorage.setItem('coffeeOrder_user', userId);
+                        localStorage.setItem('coffeeOrder_role', result.role);
+
+                        // 설정 페이지로 이동
+                        location.href = 'settings.html';
+                    } else {
+                        errorMessage.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
+                        errorMessage.classList.add('show');
+                    }
+                })
+                .catch((error) => {
+                    console.error('로그인 오류:', error);
+                    errorMessage.textContent = '로그인 중 오류가 발생했습니다. 다시 시도해주세요.';
+                    errorMessage.classList.add('show');
+                });
+        }
+
+        // 계정 인증 확인
+        async function checkCredentials(userId, password) {
+            const accountsRef = getRef('accounts');
+            const snapshot = await accountsRef.once('value');
+            const accounts = snapshot.val();
+
+            if (!accounts) {
+                return { success: false };
+            }
+
+            // 관리자 계정 확인
+            if (accounts.admin && accounts.admin.id === userId && accounts.admin.password === password) {
+                return { success: true, role: 'admin' };
+            }
+
+            // 매니저 계정 확인
+            if (accounts.managers) {
+                for (const [key, manager] of Object.entries(accounts.managers)) {
+                    if (manager.id === userId && manager.password === password) {
+                        return { success: true, role: 'manager' };
+                    }
+                }
+            }
+
+            return { success: false };
+        }
+
+        // Enter 키 처리
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('password').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+
+            document.getElementById('userId').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('password').focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

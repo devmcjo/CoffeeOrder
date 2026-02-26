@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초기 계정 설정 - 메가커피 단체 주문</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .init-container {
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .init-info {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .init-info h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .init-info p {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .account-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .account-box.admin {
+            border-left-color: #667eea;
+        }
+
+        .account-box.manager {
+            border-left-color: #6DD5FA;
+        }
+
+        .account-role {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .account-credential {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+        }
+
+        .result-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-message.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .result-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .back-btn {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .warning-box strong {
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🔧 초기 계정 설정</h1>
+        <p>Firebase에 기본 관리자/매니저 계정을 생성합니다</p>
+    </header>
+
+    <main class="container init-container">
+        <button class="back-btn" onclick="location.href='index.html'">← 메인으로 돌아가기</button>
+
+        <div class="warning-box">
+            <strong>⚠️ 주의:</strong> 이 작업은 Firebase Realtime Database에 데이터를 씁니다.<br>
+            이미 계정이 존재하는 경우 덮어쓰게 됩니다.
+        </div>
+
+        <div class="init-info">
+            <h3>📋 생성될 계정 정보</h3>
+
+            <div class="account-box admin">
+                <div class="account-role">👑 관리자 (Admin)</div>
+                <div class="account-credential">
+                    아이디: <strong>admin</strong><br>
+                    비밀번호: <strong>1234</strong>
+                </div>
+            </div>
+
+            <div class="account-box manager">
+                <div class="account-role">👤 매니저 (Manager)</div>
+                <div class="account-credential">
+                    아이디: <strong>manager</strong><br>
+                    비밀번호: <strong>1234</strong>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="initializeAccounts()">계정 생성 실행</button>
+
+        <div id="resultMessage" class="result-message"></div>
+    </main>
+
+    <footer>
+        <p>Build: 2026.02.26</p>
+        <p>Developer: devmcjo@gmail.com</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/version.js"></script>
+    <script>
+        // Firebase 초기화
+        initializeFirebase();
+
+        async function initializeAccounts() {
+            const resultDiv = document.getElementById('resultMessage');
+            const database = firebase.database();
+            const accountsRef = database.ref('accounts');
+
+            try {
+                // 현재 계정 정보 확인
+                const snapshot = await accountsRef.once('value');
+                const existingAccounts = snapshot.val();
+
+                if (existingAccounts) {
+                    const overwrite = confirm(
+                        '계정 정보가 이미 존재합니다.\n\n' +
+                        '덮어쓰시겠습니까?\n\n' +
+                        '취소를 선택하면 초기화가 중단됩니다.'
+                    );
+                    if (!overwrite) {
+                        resultDiv.textContent = '초기화가 취소되었습니다.';
+                        resultDiv.className = 'result-message error';
+                        return;
+                    }
+                }
+
+                // 초기 계정 데이터
+                const initialData = {
+                    admin: {
+                        id: 'admin',
+                        password: '1234'
+                    },
+                    managers: {
+                        manager1: {
+                            id: 'manager',
+                            password: '1234'
+                        }
+                    }
+                };
+
+                // 계정 생성
+                await accountsRef.set(initialData);
+
+                resultDiv.innerHTML = `
+                    <strong>✅ 초기 계정 설정 완료!</strong><br><br>
+                    관리자: admin / 1234<br>
+                    매니저: manager / 1234<br><br>
+                    <a href="login.html" style="color: #155724; font-weight: 600;">→ 로그인 페이지로 이동</a>
+                `;
+                resultDiv.className = 'result-message success';
+            } catch (error) {
+                console.error('계정 설정 실패:', error);
+                resultDiv.innerHTML = `<strong>❌ 오류 발생:</strong><br>${error.message}`;
+                resultDiv.className = 'result-message error';
+            }
+        }
+    </script>
+</body>
+</html>

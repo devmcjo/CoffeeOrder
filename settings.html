@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>설정 - 메가커피 단체 주문</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .settings-container {
+            max-width: 600px;
+        }
+
+        .back-btn {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .settings-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .settings-section h3 {
+            color: #667eea;
+            margin: 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input.error {
+            border-color: #ff6b6b;
+            background: #fff5f5;
+        }
+
+        .btn-primary {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            padding: 8px 15px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            transform: scale(1.05);
+        }
+
+        .admin-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .manager-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #6DD5FA 0%, #2980B9 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .user-info-header {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .user-info-text {
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .user-info-text strong {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .logout-btn {
+            padding: 8px 15px;
+            background: white;
+            border: 2px solid #ff6b6b;
+            color: #ff6b6b;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .manager-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .manager-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #6DD5FA;
+            transition: all 0.3s ease;
+        }
+
+        .manager-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .manager-item.admin {
+            border-left-color: #667eea;
+        }
+
+        .manager-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .manager-id {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .input-group .form-input {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .error-text {
+            color: #ff6b6b;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .error-text.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            padding: 10px 15px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-link.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .nav-link.primary:hover {
+            opacity: 0.9;
+        }
+
+        .permission-note {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #1565c0;
+        }
+
+        /* 토글 섹션 스타일 */
+        .toggle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-btn {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .toggle-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .toggle-btn.expanded {
+            transform: rotate(180deg);
+        }
+
+        .toggle-btn.expanded:hover {
+            transform: rotate(180deg) scale(1.1);
+        }
+
+        .toggle-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease;
+            padding-top: 0;
+        }
+
+        .toggle-content.expanded {
+            max-height: 500px;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚙️ 설정</h1>
+        <p>계정 관리 및 시스템 설정</p>
+    </header>
+
+    <main class="container settings-container">
+        <button class="back-btn" onclick="location.href='index.html'">← 메인으로 돌아가기</button>
+
+        <div id="notLoggedIn" style="display: none;">
+            <div class="settings-section" style="text-align: center; padding: 40px;">
+                <p style="font-size: 1.1rem; color: #666; margin-bottom: 20px;">🔒 로그인이 필요합니다.</p>
+                <button class="btn-primary" onclick="location.href='login.html'">로그인 페이지로 이동</button>
+            </div>
+        </div>
+
+        <div id="loggedInContent" style="display: none;">
+            <div class="user-info-header">
+                <div class="user-info-text">
+                    👤 현재 로그인: <strong id="currentUser"></strong>
+                    <span id="roleBadge"></span>
+                </div>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+
+            <div class="nav-links">
+                <a href="history.html" class="nav-link primary">📋 구매 이력 관리</a>
+                <a href="menu-admin.html" class="nav-link primary">🍹 메뉴 관리</a>
+            </div>
+
+            <div id="successMessage" class="success-message"></div>
+
+            <!-- 본인 계정 변경 (관리자/매니저 공통) - 토글 가능 -->
+            <div class="settings-section">
+                <div class="toggle-header" onclick="toggleAccountSection()">
+                    <h3>🔑 내 계정 정보 변경</h3>
+                    <button class="toggle-btn" id="accountToggleBtn">▼</button>
+                </div>
+
+                <div class="toggle-content" id="accountToggleContent">
+                    <div class="permission-note">
+                        <strong>[ID]</strong> 영문 대/소문자, 숫자만 가능<br>
+                        <strong>[PW]</strong> 영문 대/소문자, 숫자, 특수문자(~ ! # $ ^ - _)만 가능<br>
+                        공백은 입력할 수 없습니다.
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newUserId">새 아이디</label>
+                        <input type="text" id="newUserId" class="form-input" placeholder="새 아이디를 입력하세요" maxlength="20">
+                        <span id="idError" class="error-text">아이디는 영문 대/소문자와 숫자만 사용 가능합니다.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">새 비밀번호</label>
+                        <input type="password" id="newPassword" class="form-input" placeholder="새 비밀번호를 입력하세요" maxlength="20">
+                        <span id="pwError" class="error-text">비밀번호는 영문, 숫자, 특수문자(~ ! # $ ^ - _)만 사용 가능합니다.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">비밀번호 확인</label>
+                        <input type="password" id="confirmPassword" class="form-input" placeholder="비밀번호를 다시 입력하세요" maxlength="20">
+                        <span id="confirmError" class="error-text">비밀번호가 일치하지 않습니다.</span>
+                    </div>
+
+                    <button class="btn-primary" onclick="updateMyAccount()">계정 정보 변경</button>
+                </div>
+            </div>
+
+            <!-- 관리자 전용: 매니저 계정 관리 -->
+            <div id="adminSection" class="settings-section" style="display: none;">
+                <div class="toggle-header" onclick="toggleManagerSection()">
+                    <h3>👥 매니저 계정 관리</h3>
+                    <button class="toggle-btn" id="managerToggleBtn">▼</button>
+                </div>
+
+                <div class="toggle-content" id="managerToggleContent">
+                    <div class="permission-note">
+                        관리자는 매니저 계정을 생성하고 삭제할 수 있습니다.<br>
+                        <strong>ID:</strong> 영문 대/소문자, 숫자만 가능<br>
+                        <strong>PW:</strong> 영문, 숫자, 특수문자(~ ! # $ ^ - _)만 가능
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px; color: #555;">➕ 새 매니저 계정 생성</h4>
+                        <div class="input-group">
+                            <input type="text" id="newManagerId" class="form-input" placeholder="아이디" maxlength="20">
+                            <input type="password" id="newManagerPw" class="form-input" placeholder="비밀번호" maxlength="20">
+                            <button class="btn-primary" onclick="createManager()" style="white-space: nowrap;">생성</button>
+                        </div>
+                        <span id="createManagerError" class="error-text" style="margin-top: 5px;"></span>
+                    </div>
+
+                    <div>
+                        <h4 style="margin-bottom: 10px; color: #555;">📋 매니저 계정 목록</h4>
+                        <div id="managerList" class="manager-list">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 매니저 전용: 매니저 계정 조회 -->
+            <div id="managerSection" class="settings-section" style="display: none;">
+                <div class="toggle-header" onclick="toggleManagerViewSection()">
+                    <h3>👥 매니저 계정 목록</h3>
+                    <button class="toggle-btn" id="managerViewToggleBtn">▼</button>
+                </div>
+
+                <div class="toggle-content" id="managerViewToggleContent">
+                    <div class="permission-note">
+                        매니저는 모든 매니저 계정 목록을 조회할 수 있습니다.
+                    </div>
+                    <div id="managerViewList" class="manager-list">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Build: <span id="buildVersion">2026.02.26</span></p>
+        <p>Developer: devmcjo@gmail.com</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/version.js"></script>
+    <script>
+        // Firebase 초기화
+        initializeFirebase();
+
+        let currentUser = null;
+        let currentRole = null;
+
+        // 로그인 상태 확인
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('coffeeOrder_user');
+            const savedRole = localStorage.getItem('coffeeOrder_role');
+
+            if (!savedUser || !savedRole) {
+                document.getElementById('notLoggedIn').style.display = 'block';
+                document.getElementById('loggedInContent').style.display = 'none';
+                return;
+            }
+
+            currentUser = savedUser;
+            currentRole = savedRole;
+
+            document.getElementById('notLoggedIn').style.display = 'none';
+            document.getElementById('loggedInContent').style.display = 'block';
+
+            document.getElementById('currentUser').textContent = currentUser;
+
+            const badge = document.getElementById('roleBadge');
+            if (currentRole === 'admin') {
+                badge.innerHTML = '<span class="admin-badge">관리자</span>';
+                document.getElementById('adminSection').style.display = 'block';
+                loadManagerList(true);
+            } else {
+                badge.innerHTML = '<span class="manager-badge">매니저</span>';
+                document.getElementById('managerSection').style.display = 'block';
+                loadManagerList(false);
+            }
+        }
+
+        // 로그아웃
+        function logout() {
+            if (confirm('로그아웃하시겠습니까?')) {
+                localStorage.removeItem('coffeeOrder_user');
+                localStorage.removeItem('coffeeOrder_role');
+                location.href = 'index.html';
+            }
+        }
+
+        // 토글 섹션
+        function toggleAccountSection() {
+            const content = document.getElementById('accountToggleContent');
+            const btn = document.getElementById('accountToggleBtn');
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                btn.classList.remove('expanded');
+                btn.textContent = '▼';
+            } else {
+                content.classList.add('expanded');
+                btn.classList.add('expanded');
+                btn.textContent = '▲';
+            }
+        }
+
+        // 매니저 계정 관리 토글
+        function toggleManagerSection() {
+            const content = document.getElementById('managerToggleContent');
+            const btn = document.getElementById('managerToggleBtn');
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                btn.classList.remove('expanded');
+                btn.textContent = '▼';
+            } else {
+                content.classList.add('expanded');
+                btn.classList.add('expanded');
+                btn.textContent = '▲';
+            }
+        }
+
+        // 매니저 계정 조회 토글
+        function toggleManagerViewSection() {
+            const content = document.getElementById('managerViewToggleContent');
+            const btn = document.getElementById('managerViewToggleBtn');
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                btn.classList.remove('expanded');
+                btn.textContent = '▼';
+            } else {
+                content.classList.add('expanded');
+                btn.classList.add('expanded');
+                btn.textContent = '▲';
+            }
+        }
+
+        // ID 검증 (영문 대/소문자, 숫자만 가능, 공백 금지)
+        function validateId(input) {
+            if (!input || input.trim() === '') {
+                return false;
+            }
+            // 영문 대/소문자, 숫자만 허용
+            const validPattern = /^[a-zA-Z0-9]+$/;
+            return validPattern.test(input);
+        }
+
+        // PW 검증 (영문 대/소문자, 숫자, 특수문자 ~ ! # $ ^ - _ 만 가능, 공백 금지)
+        function validatePassword(input) {
+            if (!input || input.trim() === '') {
+                return false;
+            }
+            // 영문 대/소문자, 숫자, 특수문자 ~ ! # $ ^ - _ 만 허용
+            const validPattern = /^[a-zA-Z0-9~!#\$\^\-_]+$/;
+            return validPattern.test(input);
+        }
+
+        // 에러 표시
+        function showError(elementId, show) {
+            const element = document.getElementById(elementId);
+            if (show) {
+                element.classList.add('show');
+                const input = element.previousElementSibling;
+                if (input && input.classList.contains('form-input')) {
+                    input.classList.add('error');
+                }
+            } else {
+                element.classList.remove('show');
+                const input = element.previousElementSibling;
+                if (input && input.classList.contains('form-input')) {
+                    input.classList.remove('error');
+                }
+            }
+        }
+
+        // 성공 메시지 표시
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = '✓ ' + message;
+            successDiv.classList.add('show');
+            setTimeout(() => {
+                successDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        // 본인 계정 정보 변경
+        async function updateMyAccount() {
+            const newId = document.getElementById('newUserId').value;
+            const newPw = document.getElementById('newPassword').value;
+            const confirmPw = document.getElementById('confirmPassword').value;
+
+            // 검증
+            let hasError = false;
+
+            if (newId && !validateId(newId)) {
+                showError('idError', true);
+                hasError = true;
+            } else {
+                showError('idError', false);
+            }
+
+            if (newPw && !validatePassword(newPw)) {
+                showError('pwError', true);
+                hasError = true;
+            } else {
+                showError('pwError', false);
+            }
+
+            if (newPw && newPw !== confirmPw) {
+                showError('confirmError', true);
+                hasError = true;
+            } else {
+                showError('confirmError', false);
+            }
+
+            if (hasError) return;
+
+            if (!newId && !newPw) {
+                alert('변경할 내용을 입력해주세요.');
+                return;
+            }
+
+            try {
+                const accountsRef = getRef('accounts');
+                const snapshot = await accountsRef.once('value');
+                const accounts = snapshot.val();
+
+                if (currentRole === 'admin') {
+                    // 관리자 계정 업데이트
+                    const updates = {};
+                    if (newId) updates['admin/id'] = newId;
+                    if (newPw) updates['admin/password'] = newPw;
+                    await accountsRef.update(updates);
+                } else {
+                    // 매니저 계정 업데이트
+                    let managerKey = null;
+                    for (const [key, manager] of Object.entries(accounts.managers || {})) {
+                        if (manager.id === currentUser) {
+                            managerKey = key;
+                            break;
+                        }
+                    }
+
+                    if (managerKey) {
+                        const updates = {};
+                        if (newId) updates[`managers/${managerKey}/id`] = newId;
+                        if (newPw) updates[`managers/${managerKey}/password`] = newPw;
+                        await accountsRef.update(updates);
+                    }
+                }
+
+                // 로컬 스토리지 업데이트
+                if (newId) {
+                    localStorage.setItem('coffeeOrder_user', newId);
+                    currentUser = newId;
+                    document.getElementById('currentUser').textContent = newId;
+                }
+
+                // 입력 필드 초기화
+                document.getElementById('newUserId').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+
+                showSuccess('계정 정보가 성공적으로 변경되었습니다.');
+
+                // 토글 닫기
+                toggleAccountSection();
+            } catch (error) {
+                console.error('업데이트 실패:', error);
+                alert('계정 정보 변경에 실패했습니다.');
+            }
+        }
+
+        // 매니저 목록 로드
+        async function loadManagerList(isAdmin) {
+            const accountsRef = getRef('accounts');
+
+            accountsRef.on('value', (snapshot) => {
+                const accounts = snapshot.val();
+                const listId = isAdmin ? 'managerList' : 'managerViewList';
+                const listElement = document.getElementById(listId);
+
+                if (!accounts) {
+                    listElement.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">데이터를 불러올 수 없습니다.</p>';
+                    return;
+                }
+
+                let html = '';
+
+                // 관리자 표시
+                if (accounts.admin) {
+                    html += `
+                        <div class="manager-item admin">
+                            <div>
+                                <div class="manager-name">${escapeHtml(accounts.admin.id)}</div>
+                                <div class="manager-id">
+                                    <span class="admin-badge">관리자</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 매니저 목록
+                if (accounts.managers) {
+                    Object.entries(accounts.managers).forEach(([key, manager]) => {
+                        html += `
+                            <div class="manager-item">
+                                <div>
+                                    <div class="manager-name">${escapeHtml(manager.id)}</div>
+                                    <div class="manager-id">
+                                        <span class="manager-badge">매니저</span>
+                                    </div>
+                                </div>
+                                ${isAdmin ? `<button class="btn-danger" onclick="deleteManager('${key}')">삭제</button>` : ''}
+                            </div>
+                        `;
+                    });
+                }
+
+                if (html === '') {
+                    html = '<p style="text-align: center; color: #999; padding: 20px;">등록된 계정이 없습니다.</p>';
+                }
+
+                listElement.innerHTML = html;
+            });
+        }
+
+        // 매니저 계정 생성 (관리자 전용)
+        async function createManager() {
+            const id = document.getElementById('newManagerId').value.trim();
+            const pw = document.getElementById('newManagerPw').value;
+            const errorElement = document.getElementById('createManagerError');
+
+            // 검증
+            if (!id || !pw) {
+                errorElement.textContent = '아이디와 비밀번호를 모두 입력해주세요.';
+                errorElement.classList.add('show');
+                return;
+            }
+
+            if (!validateId(id)) {
+                errorElement.textContent = '아이디는 영문 대/소문자와 숫자만 사용 가능합니다.';
+                errorElement.classList.add('show');
+                return;
+            }
+
+            if (!validatePassword(pw)) {
+                errorElement.textContent = '비밀번호는 영문, 숫자, 특수문자(~ ! # $ ^ - _)만 사용 가능합니다.';
+                errorElement.classList.add('show');
+                return;
+            }
+
+            try {
+                const accountsRef = getRef('accounts');
+                const snapshot = await accountsRef.once('value');
+                const accounts = snapshot.val();
+
+                // 중복 ID 확인
+                if (accounts.admin.id === id) {
+                    errorElement.textContent = '이미 사용 중인 아이디입니다.';
+                    errorElement.classList.add('show');
+                    return;
+                }
+
+                if (accounts.managers) {
+                    for (const manager of Object.values(accounts.managers)) {
+                        if (manager.id === id) {
+                            errorElement.textContent = '이미 사용 중인 아이디입니다.';
+                            errorElement.classList.add('show');
+                            return;
+                        }
+                    }
+                }
+
+                // 매니저 생성
+                const managersRef = getRef('accounts/managers');
+                await managersRef.push({
+                    id: id,
+                    password: pw
+                });
+
+                document.getElementById('newManagerId').value = '';
+                document.getElementById('newManagerPw').value = '';
+                errorElement.classList.remove('show');
+
+                showSuccess('매니저 계정이 생성되었습니다.');
+            } catch (error) {
+                console.error('생성 실패:', error);
+                errorElement.textContent = '계정 생성에 실패했습니다.';
+                errorElement.classList.add('show');
+            }
+        }
+
+        // 매니저 계정 삭제 (관리자 전용)
+        async function deleteManager(key) {
+            if (!confirm('정말 이 매니저 계정을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                await getRef(`accounts/managers/${key}`).remove();
+                showSuccess('매니저 계정이 삭제되었습니다.');
+            } catch (error) {
+                console.error('삭제 실패:', error);
+                alert('삭제에 실패했습니다.');
+            }
+        }
+
+        // HTML 이스케이프
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
+        });
+    </script>
+</body>
+</html>

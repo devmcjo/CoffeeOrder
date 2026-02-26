@@ -7,36 +7,83 @@ let currentCategory = '전체';
 let currentFavorites = []; // 현재 로드된 즐겨찾기 목록 (문자열 배열)
 let tempFavorites = new Set(); // 수정 중인 즐겨찾기 목록 (Set for easy add/remove)
 
+// 메뉴 데이터 (Firebase에서 로드)
+let MENU_DATA = [];
+let CATEGORIES = ['전체'];
+
 // ========================================
 // 초기화
 // ========================================
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     if (!initializeFirebase()) {
         alert('Firebase 연결 실패');
         return;
     }
 
-    // 1. UI 먼저 초기화 (사용자가 기다리지 않게 함)
+    // 1. 메뉴 데이터 먼저 로드
+    await loadMenuDataFromFirebase();
+
+    // 2. UI 초기화
     initializeUI();
 
-    // 2. Firebase 데이터 비동기 로드 및 UI 업데이트
+    // 3. 즐겨찾기 데이터 로드
     loadFavoritesData().then(() => {
-        // 데이터 로드 완료 확인
-        console.log('Firebase 데이터 로드 완료:', Array.from(tempFavorites));
-
-        // 데이터 로드 완료 후 현재 화면 업데이트 (체크 표시 및 재정렬)
+        console.log('즐겨찾기 데이터 로드 완료:', Array.from(tempFavorites));
         renderMenuList(currentCategory);
-        console.log('UI 업데이트 완료');
     }).catch(err => {
         console.error('즐겨찾기 데이터 로딩 실패:', err);
-        // 실패해도 메뉴 선택은 가능하도록 유지
     });
 
     // 버튼 이벤트
     document.getElementById('saveBtn').addEventListener('click', saveAndExit);
     document.getElementById('cancelBtn').addEventListener('click', () => window.location.href = 'index.html');
 });
+
+/**
+ * Firebase에서 메뉴 데이터 로드
+ */
+function loadMenuDataFromFirebase() {
+    return new Promise((resolve) => {
+        try {
+            console.log('메뉴 데이터 로드 시작...');
+            const menuRef = getRef('menu');
+
+            menuRef.once('value', (snapshot) => {
+                const menuData = snapshot.val();
+                console.log('Firebase 메뉴 데이터:', menuData);
+
+                if (menuData) {
+                    // 카테고리 로드
+                    if (menuData.categories) {
+                        CATEGORIES = ['전체'];
+                        Object.values(menuData.categories).forEach(cat => {
+                            if (cat.name && !CATEGORIES.includes(cat.name)) {
+                                CATEGORIES.push(cat.name);
+                            }
+                        });
+                        console.log('카테고리 로드됨:', CATEGORIES);
+                    }
+
+                    // 메뉴 아이템 로드
+                    if (menuData.items) {
+                        MENU_DATA = Object.values(menuData.items);
+                        console.log('메뉴 아이템 로드됨:', MENU_DATA.length, '개');
+                    } else {
+                        console.warn('메뉴 아이템이 없습니다');
+                    }
+                } else {
+                    console.warn('Firebase에 메뉴 데이터가 없습니다.');
+                }
+
+                resolve();
+            });
+        } catch (error) {
+            console.error('메뉴 데이터 로드 실패:', error);
+            resolve();
+        }
+    });
+}
 
 /**
  * Firebase에서 즐겨찾기 데이터 로드

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>구매 이력 관리 - 메가커피 단체 주문</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .history-container {
+            max-width: 800px;
+        }
+
+        .back-btn {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .history-item:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .history-date {
+            font-size: 0.9rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .admin-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .manager-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #6DD5FA 0%, #2980B9 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-message-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .login-info {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .login-info-text {
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        .login-info strong {
+            color: #667eea;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-header h2 {
+            margin: 0;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #667eea;
+            font-size: 1.3rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-input {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input.error {
+            border-color: #ff6b6b;
+            background: #fff5f5;
+        }
+
+        .date-input {
+            font-family: inherit;
+        }
+
+        .modal-footer {
+            padding: 0 20px 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            padding: 15px 20px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .error-text {
+            color: #ff6b6b;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .error-text.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .history-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📋 구매 이력 관리</h1>
+        <p>언제, 누가 음료를 구매했는지 확인하세요</p>
+    </header>
+
+    <main class="container history-container">
+        <button class="back-btn" onclick="location.href='settings.html'">← 설정으로 돌아가기</button>
+
+        <div id="loginStatus" class="login-info" style="display: none;">
+            <span class="login-info-text">
+                👤 로그인: <strong id="currentUser"></strong> <span id="userRoleBadge"></span>
+            </span>
+            <button class="btn-secondary" onclick="goToSettings()" style="padding: 8px 15px; font-size: 0.85rem;">설정</button>
+        </div>
+
+        <section>
+            <div class="page-header">
+                <h2>☕ 음료 구매 기록</h2>
+                <button id="addHistoryBtn" class="btn-primary" style="display: none; padding: 10px 20px; font-size: 0.95rem;"
+                    onclick="openAddModal()">
+                    + 구매 기록 추가
+                </button>
+            </div>
+            <div id="historyList" class="history-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 구매 기록 추가 모달 -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 구매 기록 추가</h2>
+                <button class="close-btn" onclick="closeAddModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="purchaseDate">구매 날짜</label>
+                    <input type="date" id="purchaseDate" class="form-input date-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="purchaseName">구매자 이름</label>
+                    <input type="text" id="purchaseName" class="form-input" placeholder="구매자 이름을 입력하세요"
+                        maxlength="20">
+                    <span id="nameError" class="error-text">이름을 입력해주세요.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="addHistory()">추가</button>
+                <button class="btn-secondary" onclick="closeAddModal()">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Build: <span id="buildVersion">2026.02.26</span></p>
+        <p>Developer: devmcjo@gmail.com</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/version.js"></script>
+    <script>
+        // Firebase 초기화
+        initializeFirebase();
+
+        // 현재 로그인 정보 확인
+        let currentUser = null;
+        let currentRole = null;
+
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('coffeeOrder_user');
+            const savedRole = localStorage.getItem('coffeeOrder_role');
+
+            if (savedUser && savedRole) {
+                currentUser = savedUser;
+                currentRole = savedRole;
+
+                document.getElementById('loginStatus').style.display = 'flex';
+                document.getElementById('currentUser').textContent = currentUser;
+
+                const badge = document.getElementById('userRoleBadge');
+                if (currentRole === 'admin') {
+                    badge.innerHTML = '<span class="admin-badge">관리자</span>';
+                    document.getElementById('addHistoryBtn').style.display = 'inline-block';
+                } else if (currentRole === 'manager') {
+                    badge.innerHTML = '<span class="manager-badge">매니저</span>';
+                    document.getElementById('addHistoryBtn').style.display = 'inline-block';
+                }
+            }
+        }
+
+        function goToSettings() {
+            location.href = 'settings.html';
+        }
+
+        // 구매 이력 로드
+        function loadHistory() {
+            const historyRef = getRef('purchaseHistory');
+
+            historyRef.on('value', (snapshot) => {
+                const historyList = document.getElementById('historyList');
+                const data = snapshot.val();
+
+                if (!data || Object.keys(data).length === 0) {
+                    historyList.innerHTML = `
+                        <div class="empty-message">
+                            <div class="empty-message-icon">📝</div>
+                            <p>등록된 구매 이력이 없습니다.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 날짜 기준 내림차순 정렬
+                const sortedEntries = Object.entries(data).sort((a, b) => {
+                    return new Date(b[1].timestamp) - new Date(a[1].timestamp);
+                });
+
+                let html = '';
+                sortedEntries.forEach(([key, item]) => {
+                    const date = new Date(item.timestamp);
+                    const dateStr = date.toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    });
+
+                    html += `
+                        <div class="history-item" data-id="${key}">
+                            <div class="history-info">
+                                <div class="history-name">${escapeHtml(item.name)}</div>
+                                <div class="history-date">
+                                    📅 ${dateStr}
+                                    ${item.registeredBy ? `<span style="margin-left: 10px; color: #999;">등록: ${escapeHtml(item.registeredBy)}</span>` : ''}
+                                </div>
+                            </div>
+                            ${currentRole ? `
+                            <div class="history-actions">
+                                <button class="delete-btn" onclick="deleteHistory('${key}')" title="삭제">×</button>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+
+                historyList.innerHTML = html;
+            });
+        }
+
+        // 오늘 날짜를 YYYY-MM-DD 형식으로 반환
+        function getTodayDateString() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 모달 열기
+        function openAddModal() {
+            const modal = document.getElementById('addModal');
+            const dateInput = document.getElementById('purchaseDate');
+
+            // 오늘 날짜를 기본값으로 설정 (날짜만)
+            dateInput.value = getTodayDateString();
+
+            // 입력 필드 초기화
+            document.getElementById('purchaseName').value = '';
+            document.getElementById('nameError').classList.remove('show');
+            document.getElementById('purchaseName').classList.remove('error');
+
+            modal.classList.add('show');
+        }
+
+        // 모달 닫기
+        function closeAddModal() {
+            const modal = document.getElementById('addModal');
+            modal.classList.remove('show');
+        }
+
+        // 모달 외부 클릭 시 닫기
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('addModal');
+            if (e.target === modal) {
+                closeAddModal();
+            }
+        });
+
+        // 구매 이력 추가
+        function addHistory() {
+            const dateInput = document.getElementById('purchaseDate').value;
+            const nameInput = document.getElementById('purchaseName').value.trim();
+            const nameError = document.getElementById('nameError');
+
+            // 검증
+            if (!nameInput) {
+                nameError.textContent = '이름을 입력해주세요.';
+                nameError.classList.add('show');
+                document.getElementById('purchaseName').classList.add('error');
+                return;
+            }
+
+            nameError.classList.remove('show');
+            document.getElementById('purchaseName').classList.remove('error');
+
+            // 선택한 날짜 (시간은 00:00:00으로 설정)
+            let timestamp;
+            if (dateInput) {
+                // 날짜만 저장 (시간은 00:00:00)
+                timestamp = new Date(dateInput + 'T00:00:00').toISOString();
+            } else {
+                timestamp = new Date().toISOString();
+            }
+
+            const historyRef = getRef('purchaseHistory');
+            const newEntry = {
+                name: nameInput,
+                timestamp: timestamp,
+                registeredBy: currentUser
+            };
+
+            historyRef.push(newEntry)
+                .then(() => {
+                    closeAddModal();
+                })
+                .catch((error) => {
+                    console.error('추가 실패:', error);
+                    alert('추가에 실패했습니다.');
+                });
+        }
+
+        // 구매 이력 삭제
+        function deleteHistory(key) {
+            if (!confirm('정말 이 구매 이력을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            const historyRef = getRef('purchaseHistory/' + key);
+            historyRef.remove()
+                .then(() => {
+                    alert('삭제되었습니다.');
+                })
+                .catch((error) => {
+                    console.error('삭제 실패:', error);
+                    alert('삭제에 실패했습니다.');
+                });
+        }
+
+        // HTML 이스케이프
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
+            loadHistory();
+        });
+    </script>
+</body>
+</html>

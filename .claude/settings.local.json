@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init:*)",
+      "Bash(git remote:*)",
+      "Bash(git pull:*)",
+      "Bash(npx http-server:*)",
+      "Bash(pkill:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(firebase login:list:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(ls:*)",
+      "Bash(python3:*)",
+      "Bash(py:*)",
+      "Bash(node:*)",
+      "Bash(git checkout:*)"
+    ]
+  }
+}
