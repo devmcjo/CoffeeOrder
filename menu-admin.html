@@ -159,6 +159,8 @@
         .category-name, .menu-name {
             font-weight: 600;
             color: #333;
+            flex: 1;
+            text-align: left;
         }
 
         .menu-category {
@@ -224,6 +226,10 @@
 
         .filter-group {
             margin-bottom: 15px;
+        }
+
+        .category-list {
+            min-height: 50px;
         }
     </style>
 </head>
@@ -371,7 +377,11 @@
                     }
                 }
 
-                await categoriesRef.push({ name: name });
+                // 현재 카테고리 개수로 다음 인덱스 생성
+                const categoryCount = Object.keys(existingCategories).length;
+                const newKey = `cat${categoryCount}`;
+
+                await categoriesRef.child(newKey).set({ name: name });
                 nameInput.value = '';
                 showSuccess('카테고리가 추가되었습니다.');
                 loadCategoryList();
@@ -395,23 +405,33 @@
                     return;
                 }
 
-                let html = '';
-                Object.entries(categories).forEach(([key, category]) => {
-                    // 관리자만 삭제 버튼 표시
-                    const deleteButton = userRole === 'admin'
-                        ? `<button class="btn-danger" onclick="deleteCategory('${key}')">삭제</button>`
-                        : '';
-
-                    html += `
-                        <div class="category-item">
-                            <div class="category-name">${escapeHtml(category.name)}</div>
-                            ${deleteButton}
-                        </div>
-                    `;
-                });
-
-                listElement.innerHTML = html;
+                renderCategoryList();
             });
+        }
+
+        // 카테고리 목록 렌더링
+        function renderCategoryList() {
+            const listElement = document.getElementById('categoryList');
+            const userRole = localStorage.getItem('coffeeOrder_role');
+
+            let html = '';
+            Object.entries(categories).forEach(([key, category]) => {
+                if (!category) return;
+
+                // 관리자만 삭제 버튼 표시
+                const deleteButton = userRole === 'admin'
+                    ? `<button class="btn-danger" onclick="deleteCategory('${key}')">삭제</button>`
+                    : '';
+
+                html += `
+                    <div class="category-item" data-key="${key}">
+                        <div class="category-name">${escapeHtml(category.name)}</div>
+                        ${deleteButton}
+                    </div>
+                `;
+            });
+
+            listElement.innerHTML = html;
         }
 
         // 카테고리 삭제
@@ -427,22 +447,35 @@
             }
 
             try {
-                const categoryRef = getRef(`menu/categories/${key}`);
-                await categoryRef.remove();
+                // 1. 카테고리 이름을 먼저 저장 (삭제하기 전에!)
+                const categoryName = categories[key]?.name;
+                console.log('삭제할 카테고리:', categoryName);
 
-                // 해당 카테고리의 메뉴도 삭제
+                if (!categoryName) {
+                    alert('카테고리 정보를 찾을 수 없습니다.');
+                    return;
+                }
+
+                // 2. 해당 카테고리의 메뉴들 먼저 삭제
                 const itemsRef = getRef('menu/items');
                 const snapshot = await itemsRef.once('value');
                 const items = snapshot.val() || {};
 
-                const categoryName = categories[key]?.name;
+                let deletedCount = 0;
                 for (const [itemKey, item] of Object.entries(items)) {
                     if (item.category === categoryName) {
+                        console.log('메뉴 삭제:', item.name);
                         await getRef(`menu/items/${itemKey}`).remove();
+                        deletedCount++;
                     }
                 }
+                console.log('총 ' + deletedCount + '개 메뉴 삭제됨');
 
-                showSuccess('카테고리가 삭제되었습니다.');
+                // 3. 카테고리 삭제
+                const categoryRef = getRef(`menu/categories/${key}`);
+                await categoryRef.remove();
+
+                showSuccess('카테고리와 ' + deletedCount + '개의 메뉴가 삭제되었습니다.');
             } catch (error) {
                 console.error('삭제 실패:', error);
                 alert('카테고리 삭제에 실패했습니다.');
@@ -512,7 +545,11 @@
                     }
                 }
 
-                await itemsRef.push({
+                // 현재 메뉴 개수로 다음 인덱스 생성
+                const itemCount = Object.keys(existingItems).length;
+                const newKey = `item${itemCount}`;
+
+                await itemsRef.child(newKey).set({
                     name: name,
                     category: category
                 });
