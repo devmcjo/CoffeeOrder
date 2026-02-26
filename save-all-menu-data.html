@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메뉴 데이터 일괄 저장 - 메가커피 단체 주문</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .init-container { max-width: 600px; }
+        .init-info { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 25px; border-radius: 15px; margin-bottom: 25px; }
+        .init-info h3 { color: #667eea; margin-bottom: 15px; }
+        .btn-primary { padding: 15px 40px; font-size: 1.1rem; }
+        .result-message { margin-top: 20px; padding: 15px; border-radius: 10px; display: none; }
+        .result-message.success { background: #d4edda; color: #155724; display: block; }
+        .result-message.error { background: #f8d7da; color: #721c24; display: block; }
+        .back-btn { background: white; border: 2px solid #667eea; border-radius: 10px; padding: 10px 20px; font-size: 0.95rem; color: #667eea; cursor: pointer; transition: all 0.3s ease; margin-bottom: 20px; }
+        .back-btn:hover { background: #667eea; color: white; }
+        .menu-list-preview { background: white; padding: 15px; border-radius: 10px; margin-top: 15px; max-height: 400px; overflow-y: auto; text-align: left; }
+        .category-group { margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea; }
+        .category-title { font-weight: 600; color: #667eea; margin-bottom: 8px; }
+        .menu-items { font-size: 0.9rem; color: #555; line-height: 1.6; }
+        .stats { text-align: center; margin-top: 15px; padding: 15px; background: white; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>메뉴 데이터 일괄 저장</h1>
+        <p>하드코딩된 모든 메뉴를 Firebase에 저장합니다</p>
+    </header>
+
+    <main class="container init-container">
+        <button class="back-btn" onclick="location.href='index.html'">메인으로 돌아가기</button>
+
+        <div class="init-info">
+            <h3>저장할 메뉴 데이터</h3>
+            <p>하드코딩된 <strong>104개</strong> 메뉴와 <strong>6개</strong> 카테고리를 Firebase에 저장합니다.</p>
+
+            <div class="menu-list-preview" id="menuPreview">
+                <div class="category-group">
+                    <div class="category-title">커피 (18개)</div>
+                    <div class="menu-items">아메리칸오, 메가리칸오, 헤이즐넛아메리칸오, 바닐라아메리칸오, 꿀아메리칸오, 카페라떼, 카푸치노, 바닐라라떼, 헤이즐넛라떼, 연유라떼, 큐브라떼, 티라미수라떼, 카페모카, 치라멜마끼아또, 콜드브루(오리지널), 콜드브루라떼, 콜드브루디카페인, 콜드브루디카페인라떼</div>
+                </div>
+                <div class="category-group">
+                    <div class="category-title">디카페인 (11개)</div>
+                    <div class="menu-items">디카페인 아메리칸오, 디카페인 메가리칸오, 디카페인 카페라떼, 디카페인 바닐라라떼, 디카페인 헤이즐넛라떼, 디카페인 연유라떼, 디카페인 치라멜마끼아또, 디카페인 카페모카, 디카페인 티라미수라떼, 디카페인 카푸치노, 디카페인 꿀아메리칸오</div>
+                </div>
+                <div class="category-group">
+                    <div class="category-title">음료 (13개)</div>
+                    <div class="menu-items">곡물라떼, 고구마라떼, 녹차라떼, 딸기라떼, 로얄밀크티라떼, 토피넛라떼, 흑당라떼(펄없음), 흑당버블라떼, 흑당밀크티라떼(펄없음), 흑당버블밀크티라떼, 메가초코, 오레오초코, 핫/아이스초코</div>
+                </div>
+                <div class="category-group">
+                    <div class="category-title">티 (10개)</div>
+                    <div class="menu-items">사과유자차, 허니자몽블랙티, 유자차, 레몬차, 자몽차, 복숭아아이스티, 녹차(티백), 얼그레이(티백), 캐모마일(티백), 페퍼민트(티백)</div>
+                </div>
+                <div class="category-group">
+                    <div class="category-title">에이드&주스 (15개)</div>
+                    <div class="menu-items">메가에이드, 매직에이드(핑크), 매직에이드(블루), 체리콕, 자몽에이드, 레몬에이드, 블루레몬에이드, 청포도에이드, 라임에이드, 딸기주스, 딸기바나나주스, 오렌지주스, 샤인머스캣그린주스, 레드오렌지자몽주스, 수박주스</div>
+                </div>
+                <div class="category-group">
+                    <div class="category-title">스묘디&프라페 (16개)</div>
+                    <div class="menu-items">플레인요거트스묘디, 딸기요거트스묘디, 망고요거트스묘디, 블루베리요거트스묘디, 쿠키프라페, 민트프라페, 녹차프라페, 리얄초코프라페, 커피프라페, 유니콘프라페, 스트로베리치즈홀릭, 퐁크러쉬(플레인), 퐁크러쉬(딸기), 퐁크러쉬(바나나), 퐁크러쉬(초코), 스모어블랙쿠키프라페</div>
+                </div>
+            </div>
+
+            <div class="stats">
+                <strong>총 카테고리:</strong> 6개 | <strong>총 메뉴:</strong> 104개
+            </div>
+        </div>
+
+        <button class="btn-primary" id="saveBtn" onclick="saveAllMenuData()">모든 메뉴 데이터 저장</button>
+
+        <div id="resultMessage" class="result-message"></div>
+    </main>
+
+    <footer>
+        <p>Build: 2026.02.26</p>
+        <p>Developer: devmcjo@gmail.com</p>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        // 하드코딩된 메뉴 데이터 (menu-data.js에서 복사)
+        const MENU_DATA = [
+            // 1. 커피 (Coffee) - HOT/ICE 가능
+            { name: "아메리카노", category: "커피" },
+            { name: "메가리카노", category: "커피" },
+            { name: "헤이즐넛아메리카노", category: "커피" },
+            { name: "바닐라아메리카노", category: "커피" },
+            { name: "꿀아메리카노", category: "커피" },
+            { name: "카페라떼", category: "커피" },
+            { name: "카푸치노", category: "커피" },
+            { name: "바닐라라떼", category: "커피" },
+            { name: "헤이즐넛라떼", category: "커피" },
+            { name: "연유라떼", category: "커피" },
+            { name: "큐브라떼", category: "커피" },
+            { name: "티라미수라떼", category: "커피" },
+            { name: "카페모카", category: "커피" },
+            { name: "카라멜마끼아또", category: "커피" },
+            { name: "콜드브루(오리지널)", category: "커피" },
+            { name: "콜드브루라떼", category: "커피" },
+            { name: "콜드브루디카페인", category: "커피" },
+            { name: "콜드브루디카페인라떼", category: "커피" },
+
+            // 2. 디카페인 (Decaf) - HOT/ICE 가능
+            { name: "디카페인 아메리카노", category: "디카페인" },
+            { name: "디카페인 메가리카노", category: "디카페인" },
+            { name: "디카페인 카페라떼", category: "디카페인" },
+            { name: "디카페인 바닐라라떼", category: "디카페인" },
+            { name: "디카페인 헤이즐넛라떼", category: "디카페인" },
+            { name: "디카페인 연유라떼", category: "디카페인" },
+            { name: "디카페인 카라멜마끼아또", category: "디카페인" },
+            { name: "디카페인 카페모카", category: "디카페인" },
+            { name: "디카페인 티라미수라떼", category: "디카페인" },
+            { name: "디카페인 카푸치노", category: "디카페인" },
+            { name: "디카페인 꿀아메리카노", category: "디카페인" },
+
+            // 3. 음료 (Beverage) - 라떼, 우유 등 (HOT/ICE 가능)
+            { name: "곡물라떼", category: "음료" },
+            { name: "고구마라떼", category: "음료" },
+            { name: "녹차라떼", category: "음료" },
+            { name: "딸기라떼", category: "음료" },
+            { name: "로얄밀크티라떼", category: "음료" },
+            { name: "토피넛라떼", category: "음료" },
+            { name: "흑당라떼(펄없음)", category: "음료" },
+            { name: "흑당버블라떼", category: "음료" },
+            { name: "흑당밀크티라떼(펄없음)", category: "음료" },
+            { name: "흑당버블밀크티라떼", category: "음료" },
+            { name: "메가초코", category: "음료" },
+            { name: "오레오초코", category: "음료" },
+            { name: "핫/아이스초코", category: "음료" },
+
+            // 4. 티 (Tea) - 티백 및 과일차 (HOT/ICE 가능)
+            { name: "사과유자차", category: "티" },
+            { name: "허니자몽블랙티", category: "티" },
+            { name: "유자차", category: "티" },
+            { name: "레몬차", category: "티" },
+            { name: "자몽차", category: "티" },
+            { name: "복숭아아이스티", category: "티" },
+            { name: "녹차(티백)", category: "티" },
+            { name: "얼그레이(티백)", category: "티" },
+            { name: "캐모마일(티백)", category: "티" },
+            { name: "페퍼민트(티백)", category: "티" },
+
+            // 5. 에이드 & 주스 (Ade & Juice) - 보통 ICE Only
+            { name: "메가에이드(레몬+자몽+라임)", category: "에이드&주스" },
+            { name: "매직에이드(핑크)", category: "에이드&주스" },
+            { name: "매직에이드(블루)", category: "에이드&주스" },
+            { name: "체리콕", category: "에이드&주스" },
+            { name: "자몽에이드", category: "에이드&주스" },
+            { name: "레몬에이드", category: "에이드&주스" },
+            { name: "블루레몬에이드", category: "에이드&주스" },
+            { name: "청포도에이드", category: "에이드&주스" },
+            { name: "라임에이드", category: "에이드&주스" },
+            { name: "딸기주스", category: "에이드&주스" },
+            { name: "딸기바나나주스", category: "에이드&주스" },
+            { name: "오렌지주스", category: "에이드&주스" },
+            { name: "샤인머스캣그린주스", category: "에이드&주스" },
+            { name: "레드오렌지자몽주스", category: "에이드&주스" },
+            { name: "수박주스(시즌)", category: "에이드&주스" },
+
+            // 6. 스무디 & 프라페 (Smoothie & Frappe) - ICE Only
+            { name: "플레인요거트스무디", category: "스무디&프라페" },
+            { name: "딸기요거트스무디", category: "스무디&프라페" },
+            { name: "망고요거트스무디", category: "스무디&프라페" },
+            { name: "블루베리요거트스무디", category: "스무디&프라페" },
+            { name: "쿠키프라페", category: "스무디&프라페" },
+            { name: "민트프라페", category: "스무디&프라페" },
+            { name: "녹차프라페", category: "스무디&프라페" },
+            { name: "리얄초코프라페", category: "스무디&프라페" },
+            { name: "커피프라페", category: "스무디&프라페" },
+            { name: "유니콘프라페", category: "스무디&프라페" },
+            { name: "스트로베리치즈홀릭", category: "스무디&프라페" },
+            { name: "퐁크러쉬(플레인)", category: "스무디&프라페" },
+            { name: "퐁크러쉬(딸기)", category: "스무디&프라페" },
+            { name: "퐁크러쉬(바나나)", category: "스무디&프라페" },
+            { name: "퐁크러쉬(초코)", category: "스무디&프라페" },
+            { name: "스모어블랙쿠키프라페", category: "스무디&프라페" }
+        ];
+
+        const CATEGORIES = [
+            "커피", "디카페인", "음료", "티", "에이드&주스", "스무디&프라페"
+        ];
+
+        // Firebase 초기화
+        initializeFirebase();
+
+        async function saveAllMenuData() {
+            const saveBtn = document.getElementById('saveBtn');
+            const resultDiv = document.getElementById('resultMessage');
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = '저장 중...';
+            resultDiv.className = 'result-message';
+            resultDiv.style.display = 'none';
+
+            try {
+                console.log('Firebase 객체 확인:', typeof firebase);
+                console.log('initializeFirebase 확인:', typeof initializeFirebase);
+
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK가 로드되지 않았습니다.');
+                }
+
+                const database = firebase.database();
+                console.log('database 객체:', database);
+
+                const menuRef = database.ref('menu');
+                console.log('menuRef 생성됨');
+
+                // 먼저 기존 데이터 확인
+                console.log('기존 데이터 확인 중...');
+                const snapshot = await menuRef.once('value');
+                console.log('snapshot:', snapshot.exists());
+
+                if (snapshot.exists()) {
+                    const overwrite = confirm(
+                        '메뉴 데이터가 이미 존재합니다.\n\n' +
+                        '기존 데이터를 모두 삭제하고 새로 저장하시겠습니까?\n' +
+                        '(취소를 선택하면 저장이 중단됩니다.)'
+                    );
+                    if (!overwrite) {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = '모든 메뉴 데이터 저장';
+                        return;
+                    }
+                    // 기존 데이터 삭제
+                    await menuRef.remove();
+                }
+
+                // 카테고리 저장
+                console.log('카테고리 저장 중...');
+                const categoriesRef = menuRef.child('categories');
+                const categoriesData = {};
+                CATEGORIES.forEach((cat, index) => {
+                    categoriesData[`cat${index}`] = { name: cat };
+                });
+                await categoriesRef.set(categoriesData);
+                console.log('카테고리 저장 완료');
+
+                // 메뉴 아이템 저장
+                console.log('메뉴 아이템 저장 중...');
+                const itemsRef = menuRef.child('items');
+                const itemsData = {};
+                MENU_DATA.forEach((item, index) => {
+                    itemsData[`item${index}`] = {
+                        name: item.name,
+                        category: item.category
+                    };
+                });
+                await itemsRef.set(itemsData);
+                console.log('메뉴 아이템 저장 완료');
+
+                resultDiv.innerHTML = `
+                    <strong>메뉴 데이터 저장 완료!</strong><br><br>
+                    <strong>카테고리:</strong> ${CATEGORIES.length}개<br>
+                    <strong>메뉴:</strong> ${MENU_DATA.length}개<br><br>
+                    <a href="index.html" style="color: #155724; font-weight: 600;">메인 페이지로 이동</a><br>
+                    <a href="menu-admin.html" style="color: #155724; font-weight: 600;">메뉴 관리 페이지로 이동</a>
+                `;
+                resultDiv.className = 'result-message success';
+
+                saveBtn.textContent = '저장 완료!';
+            } catch (error) {
+                console.error('저장 실패:', error);
+                resultDiv.innerHTML = `<strong>오류 발생:</strong><br>${error.message}`;
+                resultDiv.className = 'result-message error';
+                resultDiv.style.display = 'block';
+                saveBtn.disabled = false;
+                saveBtn.textContent = '모든 메뉴 데이터 저장';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -12,6 +12,10 @@ let isMultiOrderMode = false; // 복수 주문 모드 여부
 let userFavorites = []; // 사용자 설정 즐겨찾기 목록
 let cartViewMode = 'byPerson'; // 장바구니 보기 모드: 'byPerson' | 'byMenu'
 
+// 메뉴 데이터 (Firebase에서 로드)
+let MENU_DATA = [];
+let CATEGORIES = ['전체'];
+
 // ========================================
 // 초기화 함수
 // ========================================
@@ -19,7 +23,7 @@ let cartViewMode = 'byPerson'; // 장바구니 보기 모드: 'byPerson' | 'byMe
 /**
  * 페이지 로드 시 실행되는 초기화 함수
  */
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     console.log('페이지 로드 완료');
 
     // Firebase 초기화
@@ -27,6 +31,9 @@ window.addEventListener('DOMContentLoaded', () => {
         alert('Firebase 연결에 실패했습니다. 페이지를 새로고침해주세요.');
         return;
     }
+
+    // 메뉴 데이터 로드 (Firebase에서)
+    await loadMenuDataFromFirebase();
 
     // UI 초기화
     initializeUI();
@@ -61,6 +68,64 @@ window.addEventListener('pageshow', (event) => {
     updateNameInputVisibility();
     updateMenuState();
 });
+
+// ========================================
+// Firebase 메뉴 데이터 로드
+// ========================================
+
+/**
+ * Firebase에서 메뉴 데이터를 로드하고 실시간 업데이트를 리스닝하는 함수
+ */
+function loadMenuDataFromFirebase() {
+    return new Promise((resolve) => {
+        try {
+            console.log('메뉴 데이터 로드 시작...');
+            const menuRef = getRef('menu');
+
+            // 실시간 리스너 등록
+            menuRef.on('value', (snapshot) => {
+                const menuData = snapshot.val();
+                console.log('Firebase 메뉴 데이터:', menuData);
+
+                if (menuData) {
+                    // 카테고리 로드
+                    if (menuData.categories) {
+                        CATEGORIES = ['전체'];
+                        Object.values(menuData.categories).forEach(cat => {
+                            if (cat.name && !CATEGORIES.includes(cat.name)) {
+                                CATEGORIES.push(cat.name);
+                            }
+                        });
+                        console.log('카테고리 로드됨:', CATEGORIES);
+                    }
+
+                    // 메뉴 아이템 로드
+                    if (menuData.items) {
+                        MENU_DATA = Object.values(menuData.items);
+                        console.log('메뉴 아이템 로드됨:', MENU_DATA.length, '개');
+                    } else {
+                        console.warn('메뉴 아이템이 없습니다');
+                    }
+
+                    // UI 업데이트 (이미 초기화된 경우)
+                    if (document.getElementById('categoryButtons').children.length > 0) {
+                        renderCategoryButtons();
+                        renderMenuList(currentCategory);
+                    }
+                } else {
+                    console.warn('Firebase에 메뉴 데이터가 없습니다. save-all-menu-data.html에서 초기화해주세요.');
+                    // 기본 데이터 사용 (menu-data.js에서 로드된 데이터)
+                }
+
+                resolve();
+            });
+        } catch (error) {
+            console.error('메뉴 데이터 로드 실패:', error);
+            alert('메뉴 데이터를 불러오는데 실패했습니다.');
+            resolve();
+        }
+    });
+}
 
 // ========================================
 // UI 초기화
@@ -538,8 +603,8 @@ function renderCart(orders) {
         hintDiv.textContent = 'ℹ️ 삭제는 "주문자별 보기" 모드에서 가능합니다';
         cartList.appendChild(hintDiv);
 
-        // 카테고리 순서 정의
-        const categoryOrder = ['커피', '디카페인', '음료', '티', '에이드&주스', '스묘디&프라페'];
+        // 카테고리 순서 정의 (동적 카테고리 사용, '전체' 제외)
+        const categoryOrder = CATEGORIES.filter(cat => cat !== '전체');
 
         // 메뉴 기준으로 데이터 그룹화 (카테고리 포함)
         const menuGroups = {};

@@ -49,7 +49,7 @@
   "terminal.integrated.profiles.windows": {
     "Command Prompt": {
       "path": "C:\\WINDOWS\\system32\\cmd.exe",
-      "args": ["/K", "chcp 65001"]
+      "args": ["/K", "chcp 65001 >nul"]
     },
     "PowerShell": {
       "source": "PowerShell",

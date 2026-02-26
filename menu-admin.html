@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메뉴 관리 - 메가커피 단체 주문</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .menu-admin-container {
+            max-width: 700px;
+        }
+
+        .back-btn {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .settings-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .settings-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-input, .form-select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input.error {
+            border-color: #ff6b6b;
+            background: #fff5f5;
+        }
+
+        .btn-primary {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            padding: 8px 15px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            padding: 8px 15px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .input-group .form-input {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .category-list, .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .category-item, .menu-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .category-item:hover, .menu-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-name, .menu-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .menu-category {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .error-text {
+            color: #ff6b6b;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .error-text.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            color: #667eea;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🍹 메뉴 관리</h1>
+        <p>카테고리와 음료 메뉴를 관리합니다</p>
+    </header>
+
+    <main class="container menu-admin-container">
+        <button class="back-btn" onclick="location.href='settings.html'">← 설정으로 돌아가기</button>
+
+        <div id="successMessage" class="success-message"></div>
+
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchTab('category')">📂 카테고리 관리</button>
+            <button class="tab-btn" onclick="switchTab('menu')">☕ 메뉴 관리</button>
+        </div>
+
+        <!-- 카테고리 관리 탭 -->
+        <div id="categoryTab" class="tab-content active">
+            <div class="settings-section">
+                <h3>➕ 새 카테고리 추가</h3>
+                <div class="input-group">
+                    <input type="text" id="newCategoryName" class="form-input" placeholder="카테고리 이름을 입력하세요" maxlength="20">
+                    <button class="btn-primary" onclick="addCategory()">추가</button>
+                </div>
+                <span id="categoryError" class="error-text">카테고리 이름을 입력해주세요.</span>
+            </div>
+
+            <div class="settings-section">
+                <h3>📋 카테고리 목록</h3>
+                <div id="categoryList" class="category-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메뉴 관리 탭 -->
+        <div id="menuTab" class="tab-content">
+            <div class="settings-section">
+                <h3>➕ 새 메뉴 추가</h3>
+                <div class="form-group">
+                    <label for="newMenuName">메뉴 이름</label>
+                    <input type="text" id="newMenuName" class="form-input" placeholder="메뉴 이름을 입력하세요" maxlength="30">
+                </div>
+                <div class="form-group">
+                    <label for="newMenuCategory">카테고리</label>
+                    <select id="newMenuCategory" class="form-select">
+                        <option value="">카테고리를 선택하세요</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="addMenu()">메뉴 추가</button>
+                <span id="menuError" class="error-text" style="margin-top: 10px; display: block;"></span>
+            </div>
+
+            <div class="settings-section">
+                <h3>📋 메뉴 목록</h3>
+                <div class="filter-group">
+                    <select id="filterCategory" class="form-select" onchange="loadMenuList()">
+                        <option value="">전체 카테고리</option>
+                    </select>
+                </div>
+                <div id="menuList" class="menu-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Build: <span id="buildVersion">2026.02.26</span></p>
+        <p>Developer: devmcjo@gmail.com</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/version.js"></script>
+    <script>
+        // Firebase 초기화
+        initializeFirebase();
+
+        let categories = {};
+        let currentTab = 'category';
+
+        // 탭 전환
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tab === 'category') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('categoryTab').classList.add('active');
+                loadCategoryList();
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('menuTab').classList.add('active');
+                loadCategorySelect();
+                loadMenuList();
+            }
+        }
+
+        // 성공 메시지 표시
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = '✓ ' + message;
+            successDiv.classList.add('show');
+            setTimeout(() => {
+                successDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        // 카테고리 추가
+        async function addCategory() {
+            const nameInput = document.getElementById('newCategoryName');
+            const errorText = document.getElementById('categoryError');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                errorText.classList.add('show');
+                return;
+            }
+
+            errorText.classList.remove('show');
+
+            try {
+                const categoriesRef = getRef('menu/categories');
+
+                // 중복 확인
+                const snapshot = await categoriesRef.once('value');
+                const existingCategories = snapshot.val() || {};
+
+                for (const cat of Object.values(existingCategories)) {
+                    if (cat.name === name) {
+                        alert('이미 존재하는 카테고리입니다.');
+                        return;
+                    }
+                }
+
+                await categoriesRef.push({ name: name });
+                nameInput.value = '';
+                showSuccess('카테고리가 추가되었습니다.');
+                loadCategoryList();
+            } catch (error) {
+                console.error('추가 실패:', error);
+                alert('카테고리 추가에 실패했습니다.');
+            }
+        }
+
+        // 카테고리 목록 로드
+        async function loadCategoryList() {
+            const listElement = document.getElementById('categoryList');
+            const categoriesRef = getRef('menu/categories');
+            const userRole = localStorage.getItem('coffeeOrder_role');
+
+            categoriesRef.on('value', (snapshot) => {
+                categories = snapshot.val() || {};
+
+                if (Object.keys(categories).length === 0) {
+                    listElement.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">등록된 카테고리가 없습니다.</p>';
+                    return;
+                }
+
+                let html = '';
+                Object.entries(categories).forEach(([key, category]) => {
+                    // 관리자만 삭제 버튼 표시
+                    const deleteButton = userRole === 'admin'
+                        ? `<button class="btn-danger" onclick="deleteCategory('${key}')">삭제</button>`
+                        : '';
+
+                    html += `
+                        <div class="category-item">
+                            <div class="category-name">${escapeHtml(category.name)}</div>
+                            ${deleteButton}
+                        </div>
+                    `;
+                });
+
+                listElement.innerHTML = html;
+            });
+        }
+
+        // 카테고리 삭제
+        async function deleteCategory(key) {
+            const userRole = localStorage.getItem('coffeeOrder_role');
+            if (userRole !== 'admin') {
+                alert('관리자만 카테고리를 삭제할 수 있습니다.');
+                return;
+            }
+
+            if (!confirm('정말 이 카테고리를 삭제하시겠습니까?\n\n⚠️ 해당 카테고리의 모든 메뉴도 함께 삭제됩니다.')) {
+                return;
+            }
+
+            try {
+                const categoryRef = getRef(`menu/categories/${key}`);
+                await categoryRef.remove();
+
+                // 해당 카테고리의 메뉴도 삭제
+                const itemsRef = getRef('menu/items');
+                const snapshot = await itemsRef.once('value');
+                const items = snapshot.val() || {};
+
+                const categoryName = categories[key]?.name;
+                for (const [itemKey, item] of Object.entries(items)) {
+                    if (item.category === categoryName) {
+                        await getRef(`menu/items/${itemKey}`).remove();
+                    }
+                }
+
+                showSuccess('카테고리가 삭제되었습니다.');
+            } catch (error) {
+                console.error('삭제 실패:', error);
+                alert('카테고리 삭제에 실패했습니다.');
+            }
+        }
+
+        // 카테고리 선택 드롭다운 로드
+        async function loadCategorySelect() {
+            const categoriesRef = getRef('menu/categories');
+            const snapshot = await categoriesRef.once('value');
+            categories = snapshot.val() || {};
+
+            const newMenuSelect = document.getElementById('newMenuCategory');
+            const filterSelect = document.getElementById('filterCategory');
+
+            // 기존 옵션 유지 (첫 번째 옵션만)
+            newMenuSelect.innerHTML = '<option value="">카테고리를 선택하세요</option>';
+            filterSelect.innerHTML = '<option value="">전체 카테고리</option>';
+
+            Object.entries(categories).forEach(([key, category]) => {
+                const option1 = document.createElement('option');
+                option1.value = category.name;
+                option1.textContent = category.name;
+                newMenuSelect.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = category.name;
+                option2.textContent = category.name;
+                filterSelect.appendChild(option2);
+            });
+        }
+
+        // 메뉴 추가
+        async function addMenu() {
+            const nameInput = document.getElementById('newMenuName');
+            const categorySelect = document.getElementById('newMenuCategory');
+            const errorText = document.getElementById('menuError');
+
+            const name = nameInput.value.trim();
+            const category = categorySelect.value;
+
+            if (!name) {
+                errorText.textContent = '메뉴 이름을 입력해주세요.';
+                errorText.classList.add('show');
+                return;
+            }
+
+            if (!category) {
+                errorText.textContent = '카테고리를 선택해주세요.';
+                errorText.classList.add('show');
+                return;
+            }
+
+            errorText.classList.remove('show');
+
+            try {
+                const itemsRef = getRef('menu/items');
+
+                // 중복 확인
+                const snapshot = await itemsRef.once('value');
+                const existingItems = snapshot.val() || {};
+
+                for (const item of Object.values(existingItems)) {
+                    if (item.name === name) {
+                        alert('이미 존재하는 메뉴입니다.');
+                        return;
+                    }
+                }
+
+                await itemsRef.push({
+                    name: name,
+                    category: category
+                });
+
+                nameInput.value = '';
+                categorySelect.value = '';
+                showSuccess('메뉴가 추가되었습니다.');
+                loadMenuList();
+            } catch (error) {
+                console.error('추가 실패:', error);
+                alert('메뉴 추가에 실패했습니다.');
+            }
+        }
+
+        // 메뉴 목록 로드
+        async function loadMenuList() {
+            const listElement = document.getElementById('menuList');
+            const filterCategory = document.getElementById('filterCategory').value;
+
+            const itemsRef = getRef('menu/items');
+
+            itemsRef.on('value', (snapshot) => {
+                const items = snapshot.val() || {};
+
+                let filteredItems = Object.entries(items);
+                if (filterCategory) {
+                    filteredItems = filteredItems.filter(([key, item]) => item.category === filterCategory);
+                }
+
+                // 이름순 정렬
+                filteredItems.sort((a, b) => a[1].name.localeCompare(b[1].name, 'ko'));
+
+                if (filteredItems.length === 0) {
+                    listElement.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">등록된 메뉴가 없습니다.</p>';
+                    return;
+                }
+
+                let html = '';
+                filteredItems.forEach(([key, item]) => {
+                    html += `
+                        <div class="menu-item">
+                            <div>
+                                <div class="menu-name">${escapeHtml(item.name)}</div>
+                                <div class="menu-category">${escapeHtml(item.category)}</div>
+                            </div>
+                            <button class="btn-danger" onclick="deleteMenu('${key}')">삭제</button>
+                        </div>
+                    `;
+                });
+
+                listElement.innerHTML = html;
+            });
+        }
+
+        // 메뉴 삭제
+        async function deleteMenu(key) {
+            if (!confirm('정말 이 메뉴를 삭제하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                await getRef(`menu/items/${key}`).remove();
+                showSuccess('메뉴가 삭제되었습니다.');
+            } catch (error) {
+                console.error('삭제 실패:', error);
+                alert('메뉴 삭제에 실패했습니다.');
+            }
+        }
+
+        // HTML 이스케이프
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategoryList();
+        });
+    </script>
+</body>
+</html>
