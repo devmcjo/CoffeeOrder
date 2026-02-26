@@ -10,6 +10,7 @@
 let currentCategory = '전체'; // 현재 선택된 카테고리
 let isMultiOrderMode = false; // 복수 주문 모드 여부
 let userFavorites = []; // 사용자 설정 즐겨찾기 목록
+let cartViewMode = 'byPerson'; // 장바구니 보기 모드: 'byPerson' | 'byMenu'
 
 // ========================================
 // 초기화 함수
@@ -351,6 +352,21 @@ function registerEventListeners() {
         });
     }
 
+    // 장바구니 보기 모드 radio button
+    document.querySelectorAll('input[name="cartViewMode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                cartViewMode = e.target.value;
+                // 현재 orders 데이터를 다시 불러와서 렌더링
+                const ordersRef = getRef('orders');
+                ordersRef.once('value', (snapshot) => {
+                    const orders = snapshot.val() || {};
+                    renderCart(orders);
+                });
+            }
+        });
+    });
+
     // 모달 닫기 버튼
     document.getElementById('closeCartBtn').addEventListener('click', () => {
         document.getElementById('cartModal').classList.remove('show');
@@ -514,38 +530,161 @@ function renderCart(orders) {
 
     let totalDrinks = 0;
 
-    orderArray.forEach(([orderId, orderData]) => {
-        totalDrinks += orderData.drinks.length;
+    // 보기 모드에 따라 다른 렌더링 방식 적용
+    if (cartViewMode === 'byMenu') {
+        // 메뉴순 보기 안내 메시지
+        const hintDiv = document.createElement('div');
+        hintDiv.className = 'cart-view-hint';
+        hintDiv.textContent = 'ℹ️ 삭제는 "주문자별 보기" 모드에서 가능합니다';
+        cartList.appendChild(hintDiv);
 
-        const div = document.createElement('div');
-        div.className = 'cart-item';
+        // 카테고리 순서 정의
+        const categoryOrder = ['커피', '디카페인', '음료', '티', '에이드&주스', '스묘디&프라페'];
 
-        const content = document.createElement('div');
-        content.className = 'cart-item-content';
+        // 메뉴 기준으로 데이터 그룹화 (카테고리 포함)
+        const menuGroups = {};
 
-        const name = document.createElement('div');
-        name.className = 'cart-item-name';
-        name.textContent = orderData.name;
+        // 메뉴 기준으로 데이터 그룹화
+        orderArray.forEach(([orderId, orderData]) => {
+            totalDrinks += orderData.drinks.length;
 
-        const drinks = document.createElement('div');
-        drinks.className = 'cart-item-drinks';
-        drinks.innerHTML = orderData.drinks.join('<br>');
+            orderData.drinks.forEach(drink => {
+                // drink 형식: "아메리칸 (ICE)"
+                if (!menuGroups[drink]) {
+                    // 메뉴 이름에서 카테고리 찾기
+                    const menuName = drink.replace(/ \(ICE\)$| \(HOT\)$/, '');
+                    const menuItem = MENU_DATA.find(item => item.name === menuName);
+                    const category = menuItem ? menuItem.category : '기타';
 
-        content.appendChild(name);
-        content.appendChild(drinks);
+                    menuGroups[drink] = {
+                        names: [],
+                        orderIds: [],
+                        category: category,
+                        menuName: menuName,
+                        temp: drink.includes('(HOT)') ? 'HOT' : 'ICE'
+                    };
+                }
+                // 같은 주문자가 여러 잔 주문한 경우 이름을 여러 번 추가
+                menuGroups[drink].names.push(orderData.name);
+                menuGroups[drink].orderIds.push(orderId);
+            });
+        });
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.textContent = '×';
-        deleteBtn.addEventListener('click', () => deleteOrder(orderId));
+        // 카테고리별로 그룹화
+        const categoryGroups = {};
+        categoryOrder.forEach(cat => categoryGroups[cat] = []);
+        categoryGroups['기타'] = [];
 
-        div.appendChild(content);
-        div.appendChild(deleteBtn);
-        cartList.appendChild(div);
-    });
+        Object.entries(menuGroups).forEach(([drinkKey, data]) => {
+            if (categoryGroups[data.category]) {
+                categoryGroups[data.category].push({ drinkKey, ...data });
+            } else {
+                categoryGroups['기타'].push({ drinkKey, ...data });
+            }
+        });
 
-    totalOrdersSpan.textContent = orderArray.length;
-    totalDrinksSpan.textContent = totalDrinks;
+        // 각 카테고리 렌더링
+        categoryOrder.forEach(category => {
+            const drinks = categoryGroups[category];
+            if (drinks.length === 0) return; // 해당 카테고리에 음료가 없으면 표시하지 않음
+
+            // 카테고리 헤더
+            const categoryHeader = document.createElement('div');
+            categoryHeader.className = 'cart-category-header';
+            categoryHeader.textContent = category;
+            cartList.appendChild(categoryHeader);
+
+            // 카테고리 내 음료 정렬 (이름순)
+            drinks.sort((a, b) => a.menuName.localeCompare(b.menuName, 'ko'));
+
+            drinks.forEach(drinkData => {
+                const drinkCount = drinkData.names.length;
+                const tempEmoji = drinkData.temp === 'HOT' ? '🔥' : '🧊';
+
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+
+                const content = document.createElement('div');
+                content.className = 'cart-item-content';
+
+                const name = document.createElement('div');
+                name.className = 'cart-item-name';
+
+                // 메뉴 이름과 온도 이모지, 잔 수 표시 (ICE/HOT 글자 유지)
+                const menuText = document.createElement('span');
+                menuText.className = 'menu-title';
+                menuText.innerHTML = `${tempEmoji} ${drinkData.menuName} (${drinkData.temp})`;
+                name.appendChild(menuText);
+
+                // 잔 수 뱃지 추가 (1잔 vs 2잔 이상 클래스 다르게)
+                const countBadge = document.createElement('span');
+                const badgeClass = drinkCount === 1 ? 'single' : 'multiple';
+                countBadge.className = `drink-count-badge ${badgeClass}`;
+                countBadge.textContent = `${drinkCount}잔`;
+                name.appendChild(countBadge);
+
+                const names = document.createElement('div');
+                names.className = 'cart-item-drinks';
+
+                // 주문자 이름들을 콤마로 구분하여 표시 (중복 포함)
+                const uniqueNames = drinkData.names;
+                const nameCount = {};
+                uniqueNames.forEach(name => {
+                    nameCount[name] = (nameCount[name] || 0) + 1;
+                });
+
+                // 이름 표시 (같은 이름이 여러 번이면 Nx 표시)
+                const displayNames = Object.entries(nameCount).map(([name, count]) => {
+                    return count > 1 ? `${name} x${count}` : name;
+                });
+
+                names.textContent = displayNames.join(', ');
+
+                content.appendChild(name);
+                content.appendChild(names);
+
+                div.appendChild(content);
+                cartList.appendChild(div);
+            });
+        });
+
+        totalOrdersSpan.textContent = orderArray.length;
+        totalDrinksSpan.textContent = totalDrinks;
+    } else {
+        // 주문자별 보기 (기존 방식)
+        orderArray.forEach(([orderId, orderData]) => {
+            totalDrinks += orderData.drinks.length;
+
+            const div = document.createElement('div');
+            div.className = 'cart-item';
+
+            const content = document.createElement('div');
+            content.className = 'cart-item-content';
+
+            const name = document.createElement('div');
+            name.className = 'cart-item-name';
+            name.textContent = orderData.name;
+
+            const drinks = document.createElement('div');
+            drinks.className = 'cart-item-drinks';
+            drinks.innerHTML = orderData.drinks.join('<br>');
+
+            content.appendChild(name);
+            content.appendChild(drinks);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = '×';
+            deleteBtn.addEventListener('click', () => deleteOrder(orderId));
+
+            div.appendChild(content);
+            div.appendChild(deleteBtn);
+            cartList.appendChild(div);
+        });
+
+        totalOrdersSpan.textContent = orderArray.length;
+        totalDrinksSpan.textContent = totalDrinks;
+    }
 }
 
 // ========================================

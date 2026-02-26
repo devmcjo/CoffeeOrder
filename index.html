@@ -88,6 +88,16 @@
                     <div class="cart-summary">
                         <p>총 <span id="totalOrders">0</span>건 / <span id="totalDrinks">0</span>잔</p>
                     </div>
+                    <div class="cart-view-mode">
+                        <label class="radio-label">
+                            <input type="radio" name="cartViewMode" value="byPerson" checked>
+                            <span>👤 주문자별 보기</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="cartViewMode" value="byMenu">
+                            <span>☕ 메뉴별 보기</span>
+                        </label>
+                    </div>
                     <div id="cartList" class="cart-list">
                         <!-- Firebase에서 실시간으로 로드됩니다 -->
                     </div>
@@ -101,7 +111,7 @@
 
     <!-- 푸터 -->
     <footer>
-        <p>Build: 2026.02.02 | Ver 1.0.0.0</p>
+        <p>Build: 2026.02.26 | Ver 1.26.2.22</p>
         <p>Developer: devmcjo@gmail.com</p>
     </footer>
 
