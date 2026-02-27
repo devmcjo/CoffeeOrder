@@ -271,9 +271,11 @@ function renderMenuList(category, keyword = '') {
 
         // ICE Only 조건: 
         // 1. 카테고리가 '에이드&주스', '스무디&프라페'인 경우
-        // 2. 카테고리가 '티'이면서 이름에 '아이스티'가 포함된 경우
+        // 2. 카테고리가 '티'이면서 이름에 '아이스'가 포함된 경우
+        // 3. '딸기라떼'는 그냥 ICE
         const isIceOnly = ['에이드&주스', '스무디&프라페'].includes(item.category) ||
-            (item.category === '티' && item.name.includes('아이스티'));
+            (item.category === '티' && item.name.includes('아이스')) ||
+            (item.name === '딸기라떼');
 
         const iceBtn = document.createElement('button');
         iceBtn.type = 'button';
