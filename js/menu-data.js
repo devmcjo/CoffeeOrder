@@ -1,9 +1,22 @@
 /**
  * 메가커피 메뉴 데이터 (2026.02.02 최종 정밀 검수 버전)
- * - ICE/HOT 메뉴 통합 (단일 메뉴명 사용, UI에서 옵션 선택)
+ * - ICE/HOT 메뉴 통합 (단일 메뉴�록 사용, UI에서 옵션 선택)
  * - 전 카테고리 누락 메뉴 대거 보완
  * - 중복 제거 및 카테고리 재정비
+ *
+ * [중요] 이 파일은 평소에는 사용되지 않습니다!  (2026.02.26 DB화)
+ *
+ * 평상시에는 Firebase Realtime Database에서 메뉴 데이터를 불러옵니다.
+ * 이 파일의 데이터는 다음과 같은 경우에만 폰백(Fallback)으로 사용됩니다:
+ *   1. Firebase DB에 연결할 수 없는 경우
+ *   2. Firebase DB의 menu/categories 또는 menu/items 경로에 데이터가 없는 경우
+ *
+ * 메뉴 관리는 menu-admin.html 페이지에서 Firebase DB를 통해 이루어집니다.
+ * 이 파일을 직접 수정필요 없으며, DB 데이터가 우선적으로 적용됩니다.
+ *
+ * 관련 로직: js/app.js > loadMenuDataFromFirebase() 함수 참조
  */
+
 
 const MENU_DATA = [
     // 1. 커피 (Coffee) - HOT/ICE 가능
