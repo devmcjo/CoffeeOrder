@@ -1145,7 +1145,7 @@ function checkIsIceOnly(menuName, category) {
         }
     }
 
-    // 메뉴 이름 기반 체크
+    // 메뉴 이름 기반 체크 (디카페인 존재)
     const iceOnlyKeywords = ['메가리카노', '할메가커피', '왕메가헛개리카노', '왕메가카페라떼'];
     if (iceOnlyKeywords.some(keyword => menuName.includes(keyword))) {
         return true;
