@@ -287,28 +287,31 @@ function renderMenuList(category, keyword = '') {
         iceBtn.dataset.temp = 'ICE';
         iceBtn.dataset.index = index;
 
-        const hotBtn = document.createElement('button');
-        hotBtn.type = 'button';
-        hotBtn.className = 'temp-btn temp-hot';
-        hotBtn.textContent = '🔥 HOT';
-        hotBtn.dataset.temp = 'HOT';
-        hotBtn.dataset.index = index;
-
-        // ICE Only 처리
-        if (isIceOnly) {
-            hotBtn.disabled = true;
-            hotBtn.title = '아이스 전용 메뉴입니다.';
-        }
-
         tempButtons.appendChild(iceBtn);
-        tempButtons.appendChild(hotBtn);
 
         // 여러 개 주문하기 모드: 통합된 UI 사용
         if (isMultiOrderMode) {
             renderMultiOrderTempControls(tempButtons, item.name, isIceOnly);
         } else {
-            // 단일 주문 모드: 기존 토글 방식
-            setupSingleOrderTempControls(iceBtn, hotBtn, isIceOnly);
+            // 단일 주문 모드
+            if (isIceOnly) {
+                // ICE Only: ICE 버튼만 표시 (가울데 정렬, temp-main-btn 스타일)
+                iceBtn.className = 'temp-main-btn temp-ice-btn active';
+                iceBtn.innerHTML = '🧊 ICE';
+                iceBtn.style.width = '100%';
+                iceBtn.style.justifyContent = 'center';
+            } else {
+                // 일반 메뉴: ICE/HOT 버튼 모두 표시
+                const hotBtn = document.createElement('button');
+                hotBtn.type = 'button';
+                hotBtn.className = 'temp-btn temp-hot';
+                hotBtn.textContent = '🔥 HOT';
+                hotBtn.dataset.temp = 'HOT';
+                hotBtn.dataset.index = index;
+
+                tempButtons.appendChild(hotBtn);
+                setupSingleOrderTempControls(iceBtn, hotBtn);
+            }
         }
 
         // 메뉴 선택 시 온도 버튼 표시/숨김
@@ -320,18 +323,17 @@ function renderMenuList(category, keyword = '') {
                         if (tb.id !== `temp-${index}`) {
                             tb.style.display = 'none';
                             // 다른 버튼들 기본값으로 리셋
-                            const tempIce = tb.querySelector('.temp-ice');
-                            const tempHot = tb.querySelector('.temp-hot');
+                            const tempIce = tb.querySelector('.temp-ice, .temp-ice-btn');
+                            const tempHot = tb.querySelector('.temp-hot, .temp-hot-btn');
                             if (tempIce) tempIce.classList.add('active');
                             if (tempHot) tempHot.classList.remove('active');
                         }
                     });
                 }
 
-                // ICE Only라면 ICE 자동 선택 및 HOT 비활성 시각화 유지
+                // ICE Only인 경우 ICE 버튼만 활성화
                 if (isIceOnly) {
                     iceBtn.classList.add('active');
-                    hotBtn.classList.remove('active');
                 }
 
                 tempButtons.style.display = 'flex';
@@ -339,7 +341,6 @@ function renderMenuList(category, keyword = '') {
                 tempButtons.style.display = 'none';
                 // 기본값으로 ICE 선택 (상태 초기화)
                 iceBtn.classList.add('active');
-                hotBtn.classList.remove('active');
             }
         });
 
@@ -1002,17 +1003,13 @@ function setupSingleOrderTempControls(iceBtn, hotBtn, isIceOnly) {
 
     iceBtn.addEventListener('click', () => {
         iceBtn.classList.add('active');
-        iceBtn.classList.add('temp-ice-btn');
         hotBtn.classList.remove('active');
-        hotBtn.classList.remove('temp-hot-btn');
     });
 
     hotBtn.addEventListener('click', () => {
         if (isIceOnly) return;
         hotBtn.classList.add('active');
-        hotBtn.classList.add('temp-hot-btn');
         iceBtn.classList.remove('active');
-        iceBtn.classList.remove('temp-ice-btn');
     });
 }
 
