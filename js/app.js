@@ -12,6 +12,10 @@ let isMultiOrderMode = false; // 복수 주문 모드 여부
 let userFavorites = []; // 사용자 설정 즐겨찾기 목록
 let cartViewMode = 'byPerson'; // 장바구니 보기 모드: 'byPerson' | 'byMenu'
 
+// 임시 장바구니 (여러 개 주문하기 모드용)
+// 구조: { key: 'menuName|ICE', menuName: '아메리카노', temp: 'ICE', quantity: 2 }
+let tempCart = [];
+
 // 메뉴 데이터 (Firebase에서 로드)
 let MENU_DATA = [];
 let CATEGORIES = ['전체'];
@@ -172,8 +176,12 @@ function renderCategoryButtons() {
             button.classList.add('active');
             currentCategory = category;
 
+            // 검색어 가져와서 함께 적용
+            const searchInput = document.getElementById('searchInput');
+            const keyword = searchInput ? searchInput.value.trim() : '';
+
             // 메뉴 리스트 재렌더링
-            renderMenuList(category);
+            renderMenuList(category, keyword);
         });
 
         container.appendChild(button);
@@ -269,13 +277,8 @@ function renderMenuList(category, keyword = '') {
         tempButtons.style.display = 'none'; // 기본적으로 숨김
         tempButtons.id = `temp-${index}`;
 
-        // ICE Only 조건: 
-        // 1. 카테고리가 '에이드&주스', '스무디&프라페'인 경우
-        // 2. 카테고리가 '티'이면서 이름에 '아이스'가 포함된 경우
-        // 3. '딸기라떼'는 그냥 ICE
-        const isIceOnly = ['에이드&주스', '스무디&프라페'].includes(item.category) ||
-            (item.category === '티' && item.name.includes('아이스')) ||
-            (item.name === '딸기라떼');
+        // ICE Only 체크 (중앙화된 함수 사용)
+        const isIceOnly = checkIsIceOnly(item.name, item.category);
 
         const iceBtn = document.createElement('button');
         iceBtn.type = 'button';
@@ -294,26 +297,19 @@ function renderMenuList(category, keyword = '') {
         // ICE Only 처리
         if (isIceOnly) {
             hotBtn.disabled = true;
-            hotBtn.style.opacity = '0.5';
-            hotBtn.style.cursor = 'not-allowed';
             hotBtn.title = '아이스 전용 메뉴입니다.';
-            // 강제 active 제거 및 ICE 활성화는 아래 이벤트에서 보장
         }
-
-        // 온도 버튼 클릭 이벤트
-        iceBtn.addEventListener('click', () => {
-            iceBtn.classList.add('active');
-            hotBtn.classList.remove('active');
-        });
-
-        hotBtn.addEventListener('click', () => {
-            if (isIceOnly) return; // 클릭 방지
-            hotBtn.classList.add('active');
-            iceBtn.classList.remove('active');
-        });
 
         tempButtons.appendChild(iceBtn);
         tempButtons.appendChild(hotBtn);
+
+        // 여러 개 주문하기 모드: 통합된 UI 사용
+        if (isMultiOrderMode) {
+            renderMultiOrderTempControls(tempButtons, item.name, isIceOnly);
+        } else {
+            // 단일 주문 모드: 기존 토글 방식
+            setupSingleOrderTempControls(iceBtn, hotBtn, isIceOnly);
+        }
 
         // 메뉴 선택 시 온도 버튼 표시/숨김
         input.addEventListener('change', () => {
@@ -381,6 +377,7 @@ function registerEventListeners() {
     // 복수 주문 모드 체크박스
     document.getElementById('multiOrderMode').addEventListener('change', (e) => {
         isMultiOrderMode = e.target.checked;
+        updateMultiOrderModeUI();
         renderMenuList(currentCategory);
     });
 
@@ -448,6 +445,10 @@ function registerEventListeners() {
             document.getElementById('cartModal').classList.remove('show');
         }
     });
+
+    // 임시 장바구니 관련 이벤트 리스너
+    document.getElementById('clearTempCartBtn').addEventListener('click', clearTempCart);
+    document.getElementById('addTempCartToCartBtn').addEventListener('click', addTempCartToFirebase);
 }
 
 /**
@@ -834,10 +835,11 @@ function addToCart() {
                 }
             });
 
-            // 이름 선택 초기화 (custom이 아닌 경우)
-            if (nameSelect.value !== 'custom') {
-                nameSelect.selectedIndex = 0;
-            }
+            // 이름 선택 초기화 (항상 초기화하여 메뉴 비활성화)
+            nameSelect.selectedIndex = 0;
+            document.getElementById('customName').value = '';
+            updateNameInputVisibility();
+            updateMenuState();
         }).catch(error => {
             alert('주문 추가 중 오류가 발생했습니다. 다시 시도해주세요.');
             console.error(error);
@@ -980,9 +982,475 @@ function getChosung(text) {
     return result;
 }
 
+// ========================================
+// 온도 컨트롤 헬퍼 함수들 (재사용성)
+// ========================================
+
 /**
- * 페이지 언로드 시 정리 작업 (선택사항)
+ * 단일 주문 모드: ICE/HOT 토글 버튼 설정
+ * @param {HTMLElement} iceBtn - ICE 버튼
+ * @param {HTMLElement} hotBtn - HOT 버튼
+ * @param {boolean} isIceOnly - ICE Only 여부
  */
+function setupSingleOrderTempControls(iceBtn, hotBtn, isIceOnly) {
+    // 버튼 스타일을 여러 개 주문하기 모드와 동일하게 설정
+    iceBtn.className = 'temp-main-btn temp-ice-btn active';
+    iceBtn.innerHTML = '🧊 ICE <span class="plus-hint"></span>';
+
+    hotBtn.className = 'temp-main-btn temp-hot-btn';
+    hotBtn.innerHTML = '🔥 HOT <span class="plus-hint"></span>';
+
+    iceBtn.addEventListener('click', () => {
+        iceBtn.classList.add('active');
+        iceBtn.classList.add('temp-ice-btn');
+        hotBtn.classList.remove('active');
+        hotBtn.classList.remove('temp-hot-btn');
+    });
+
+    hotBtn.addEventListener('click', () => {
+        if (isIceOnly) return;
+        hotBtn.classList.add('active');
+        hotBtn.classList.add('temp-hot-btn');
+        iceBtn.classList.remove('active');
+        iceBtn.classList.remove('temp-ice-btn');
+    });
+}
+
+/**
+ * 여러 개 주문하기 모드: 온도 컨트롤 UI 렌더링
+ * @param {HTMLElement} container - 버튼을 추가할 컨테이너
+ * @param {string} menuName - 메뉴 이름
+ * @param {boolean} isIceOnly - ICE Only 여부
+ */
+function renderMultiOrderTempControls(container, menuName, isIceOnly) {
+    container.innerHTML = '';
+    container.classList.add('multi-mode');
+
+    // ICE 컨트롤
+    container.appendChild(createTempControlGroup(menuName, 'ICE'));
+
+    // HOT 컨트롤 (ICE Only가 아닌 경우)
+    if (!isIceOnly) {
+        container.appendChild(createTempControlGroup(menuName, 'HOT'));
+    }
+}
+
+/**
+ * 온도 컨트롤 그룹 생성 (재사용 가능한 컴포넌트)
+ * @param {string} menuName - 메뉴 이름
+ * @param {string} temp - 온도 (ICE/HOT)
+ * @returns {HTMLElement} 컨트롤 그룹 요소
+ */
+function createTempControlGroup(menuName, temp) {
+    const isIce = temp === 'ICE';
+    const wrapper = document.createElement('div');
+    wrapper.className = `temp-control-wrapper ${isIce ? 'ice-wrapper' : 'hot-wrapper'}`;
+    wrapper.dataset.menu = menuName;
+    wrapper.dataset.temp = temp;
+
+    // 감소 버튼
+    const minusBtn = document.createElement('button');
+    minusBtn.type = 'button';
+    minusBtn.className = 'temp-minus-btn';
+    minusBtn.textContent = '−';
+    minusBtn.addEventListener('click', () => {
+        decreaseTempCartItem(`${menuName}|${temp}`);
+        updateTempControlState(wrapper, menuName, temp);
+    });
+
+    // 메인 버튼 (추가 기능)
+    const mainBtn = document.createElement('button');
+    mainBtn.type = 'button';
+    mainBtn.className = `temp-main-btn ${isIce ? 'temp-ice-btn' : 'temp-hot-btn'}`;
+    // + 아이콘 추가하여 클릭 시 추가된다는 것을 암시
+    mainBtn.innerHTML = `${isIce ? '🧊' : '🔥'} ${temp} <span class="plus-hint">+</span>`;
+
+    // 수량 배지
+    const badge = document.createElement('span');
+    badge.className = 'temp-quantity-badge';
+    badge.style.display = 'none';
+    mainBtn.appendChild(badge);
+
+    mainBtn.addEventListener('click', () => {
+        addToTempCart(menuName, temp);
+        updateTempControlState(wrapper, menuName, temp);
+    });
+
+    // ICE: - [ICE] , HOT: [HOT] -
+    if (isIce) {
+        wrapper.appendChild(minusBtn);
+        wrapper.appendChild(mainBtn);
+    } else {
+        wrapper.appendChild(mainBtn);
+        wrapper.appendChild(minusBtn);
+    }
+
+    // 초기 상태 업데이트
+    updateTempControlState(wrapper, menuName, temp);
+
+    return wrapper;
+}
+
+/**
+ * 온도 컨트롤 상태 업데이트
+ * @param {HTMLElement} wrapper - 컨트롤 wrapper
+ * @param {string} menuName - 메뉴 이름
+ * @param {string} temp - 온도
+ */
+function updateTempControlState(wrapper, menuName, temp) {
+    const cartItem = tempCart.find(item => item.menuName === menuName && item.temp === temp);
+    const quantity = cartItem ? cartItem.quantity : 0;
+
+    const badge = wrapper.querySelector('.temp-quantity-badge');
+    const minusBtn = wrapper.querySelector('.temp-minus-btn');
+    const mainBtn = wrapper.querySelector('.temp-main-btn');
+
+    if (quantity > 0) {
+        badge.textContent = quantity;
+        badge.style.display = 'inline-flex';
+        minusBtn.style.visibility = 'visible';
+        mainBtn.classList.add('has-quantity');
+    } else {
+        badge.style.display = 'none';
+        minusBtn.style.visibility = 'hidden';
+        mainBtn.classList.remove('has-quantity');
+    }
+}
+
+// ========================================
+// ICE Only 체크 함수 (단일 소스 오브 트루스)
+// ========================================
+
+/**
+ * 메뉴가 ICE Only인지 확인
+ * @param {string} menuName - 메뉴 이름
+ * @param {string} category - 카테고리 (선택적)
+ * @returns {boolean} ICE Only 여부
+ */
+function checkIsIceOnly(menuName, category) {
+    // 카테고리 기반 체크
+    if (category) {
+        if (['에이드&주스', '스무디&프라페'].includes(category)) {
+            return true;
+        }
+        if (category === '티' && menuName.includes('아이스')) {
+            return true;
+        }
+    }
+
+    // 메뉴 이름 기반 체크
+    const iceOnlyKeywords = ['메가리카노', '할메가커피', '왕메가헛개리카노', '왕메가카페라떼'];
+    if (iceOnlyKeywords.some(keyword => menuName.includes(keyword))) {
+        return true;
+    }
+
+    // 정확한 이름 매칭
+    if (menuName === '딸기라떼' || menuName === '오레오초코') {
+        return true;
+    }
+
+    return false;
+}
+
+// ========================================
+// 여러 개 주문하기 모드 UI 관리
+// ========================================
+
+/**
+ * 복수 주문 모드에 따라 UI 업데이트
+ */
+function updateMultiOrderModeUI() {
+    const tempCartSection = document.getElementById('tempCartSection');
+    const singleOrderSection = document.getElementById('singleOrderSection');
+
+    if (isMultiOrderMode) {
+        tempCartSection.style.display = 'block';
+        singleOrderSection.style.display = 'none';
+        renderTempCart();
+    } else {
+        tempCartSection.style.display = 'none';
+        singleOrderSection.style.display = 'flex';
+        // 모드 전환 시 임시 장바구니 비우기
+        clearTempCart(false);
+    }
+}
+
+// ========================================
+// 임시 장바구니 (여러 개 주문하기 모드용)
+// ========================================
+
+/**
+ * 임시 장바구니에 음료 추가
+ * @param {string} menuName - 메뉴 이름
+ * @param {string} temp - 온도 (ICE/HOT)
+ */
+function addToTempCart(menuName, temp) {
+    // ICE Only 메뉴 체크 (중앙화된 함수 사용)
+    const menuItem = MENU_DATA.find(item => item.name === menuName);
+    const isIceOnly = menuItem ? checkIsIceOnly(menuName, menuItem.category) : false;
+
+    // ICE Only 메뉴는 HOT 선택 불가
+    if (isIceOnly && temp === 'HOT') {
+        return;
+    }
+
+    const key = `${menuName}|${temp}`;
+    const existingItem = tempCart.find(item => item.key === key);
+
+    if (existingItem) {
+        existingItem.quantity++;
+    } else {
+        tempCart.push({
+            key: key,
+            menuName: menuName,
+            temp: temp,
+            quantity: 1
+        });
+    }
+
+    renderTempCart();
+}
+
+/**
+ * 임시 장바구니에서 수량 감소
+ * @param {string} key - 아이템 키 (menuName|temp)
+ */
+function decreaseTempCartItem(key) {
+    const item = tempCart.find(item => item.key === key);
+    if (item) {
+        item.quantity--;
+        if (item.quantity <= 0) {
+            removeFromTempCart(key);
+            return;
+        }
+    }
+    renderTempCart();
+}
+
+/**
+ * 메뉴 이름으로 체크박스 찾아서 해제
+ * @param {string} menuName - 메뉴 이름
+ */
+function uncheckMenuItem(menuName) {
+    const inputs = document.querySelectorAll('.menu-item-wrapper input[type="checkbox"]');
+    inputs.forEach(input => {
+        if (input.value === menuName) {
+            input.checked = false;
+            // 온도 버튼도 숨기기
+            const index = input.dataset.index;
+            const tempButtons = document.getElementById(`temp-${index}`);
+            if (tempButtons) {
+                tempButtons.style.display = 'none';
+                const iceBtn = tempButtons.querySelector('.temp-ice');
+                const hotBtn = tempButtons.querySelector('.temp-hot');
+                if (iceBtn) iceBtn.classList.add('active');
+                if (hotBtn) hotBtn.classList.remove('active');
+            }
+        }
+    });
+}
+
+/**
+ * 모든 메뉴 체크박스 해제
+ */
+function uncheckAllMenuItems() {
+    document.querySelectorAll('.menu-item-wrapper input[type="checkbox"]').forEach(input => {
+        input.checked = false;
+    });
+    document.querySelectorAll('.temp-buttons').forEach(tb => {
+        tb.style.display = 'none';
+        const iceBtn = tb.querySelector('.temp-ice');
+        const hotBtn = tb.querySelector('.temp-hot');
+        if (iceBtn) iceBtn.classList.add('active');
+        if (hotBtn) hotBtn.classList.remove('active');
+    });
+}
+
+/**
+ * 임시 장바구니에서 아이템 완전 제거
+ * @param {string} key - 아이템 키 (menuName|temp)
+ */
+function removeFromTempCart(key) {
+    const item = tempCart.find(item => item.key === key);
+    tempCart = tempCart.filter(item => item.key !== key);
+
+    // 해당 메뉴의 다른 온도도 장바구니에 없으면 체크박스 해제
+    if (item) {
+        const hasOtherTemp = tempCart.some(cartItem => cartItem.menuName === item.menuName);
+        if (!hasOtherTemp) {
+            uncheckMenuItem(item.menuName);
+        }
+    }
+
+    renderTempCart();
+}
+
+/**
+ * 임시 장바구니 비우기
+ * @param {boolean} confirmDelete - 확인 대화상자 표시 여부
+ */
+function clearTempCart(confirmDelete = true) {
+    if (confirmDelete && tempCart.length === 0) return;
+
+    if (confirmDelete && !confirm('임시 장바구니를 비우시겠습니까?')) {
+        return;
+    }
+
+    tempCart = [];
+    uncheckAllMenuItems();
+    renderTempCart();
+}
+
+/**
+ * 임시 장바구니 렌더링
+ */
+function renderTempCart() {
+    const container = document.getElementById('tempCartList');
+    const countSpan = document.getElementById('tempCartCount');
+
+    // 총 개수 계산
+    const totalItems = tempCart.reduce((sum, item) => sum + item.quantity, 0);
+    countSpan.textContent = `(${totalItems}개)`;
+
+    if (tempCart.length === 0) {
+        container.innerHTML = '<div class="empty-message">선택한 음료가 없습니다</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+
+    tempCart.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'temp-cart-item';
+
+        const tempEmoji = item.temp === 'HOT' ? '🔥' : '🧊';
+        const tempClass = item.temp === 'HOT' ? 'temp-hot' : 'temp-ice';
+
+        div.innerHTML = `
+            <div class="temp-cart-item-info">
+                <div class="temp-cart-item-name">${escapeHtml(item.menuName)}</div>
+                <div class="temp-cart-item-temp">
+                    <span class="${tempClass}">${tempEmoji} ${item.temp}</span>
+                </div>
+            </div>
+            <div class="temp-cart-item-controls">
+                <button class="temp-cart-quantity-btn" onclick="decreaseTempCartItem('${item.key}')" title="수량 감소">−</button>
+                <span class="temp-cart-quantity">${item.quantity}</span>
+                <button class="temp-cart-quantity-btn" onclick="addToTempCart('${item.menuName}', '${item.temp}')" title="수량 증가">+</button>
+                <button class="temp-cart-delete-btn" onclick="removeFromTempCart('${item.key}')" title="삭제">🗑️</button>
+            </div>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+/**
+ * 임시 장바구니의 내용을 Firebase에 저장
+ */
+function addTempCartToFirebase() {
+    // 이름 검증
+    const nameSelect = document.getElementById('nameSelect');
+    const customNameInput = document.getElementById('customName');
+
+    let name = nameSelect.value;
+    if (name === 'custom') {
+        name = customNameInput.value.trim();
+    }
+
+    if (!name || name === '') {
+        alert('이름을 선택하거나 입력해주세요!');
+        return;
+    }
+
+    if (tempCart.length === 0) {
+        alert('음료를 선택해주세요!');
+        return;
+    }
+
+    // 임시 장바구니를 drinks 배열로 변환
+    const selectedDrinks = [];
+    tempCart.forEach(item => {
+        for (let i = 0; i < item.quantity; i++) {
+            selectedDrinks.push(`${item.menuName} (${item.temp})`);
+        }
+    });
+
+    // 1인당 수량 제한 (20잔)
+    if (selectedDrinks.length > 20) {
+        alert(`한 번에 최대 20잔까지만 주문할 수 있습니다!\n현재 선택: ${selectedDrinks.length}잔`);
+        return;
+    }
+
+    // 전체 수량 제한 확인 (100잔)
+    checkTotalLimit(selectedDrinks.length).then(canAdd => {
+        if (!canAdd) {
+            return;
+        }
+
+        // Firebase에 주문 추가
+        const ordersRef = getRef('orders');
+        const newOrderRef = ordersRef.push();
+
+        newOrderRef.set({
+            name: name,
+            drinks: selectedDrinks,
+            timestamp: Date.now()
+        }).then(() => {
+            alert(`✅ 주문이 추가되었습니다!\n\n이름: ${name}\n음료: ${selectedDrinks.length}잔`);
+
+            // 임시 장바구니 비우기
+            clearTempCart(false);
+
+            // 체크박스 및 온도 버튼 초기화
+            document.querySelectorAll('.menu-item-wrapper input[type="checkbox"]').forEach(input => {
+                input.checked = false;
+            });
+            document.querySelectorAll('.temp-buttons').forEach(tb => {
+                tb.style.display = 'none';
+                const iceBtn = tb.querySelector('.temp-ice');
+                const hotBtn = tb.querySelector('.temp-hot');
+                if (iceBtn) iceBtn.classList.add('active');
+                if (hotBtn) hotBtn.classList.remove('active');
+            });
+
+            // 이름 선택 초기화 (custom이 아닌 경우)
+            if (nameSelect.value !== 'custom') {
+                nameSelect.selectedIndex = 0;
+                updateNameInputVisibility();
+                updateMenuState();
+            }
+
+            // 여러 개 주문하기 모드 해제
+            const multiOrderCheckbox = document.getElementById('multiOrderMode');
+            if (multiOrderCheckbox) {
+                multiOrderCheckbox.checked = false;
+                isMultiOrderMode = false;
+                updateMultiOrderModeUI();
+                renderMenuList(currentCategory);
+            }
+        }).catch(error => {
+            alert('주문 추가 중 오류가 발생했습니다. 다시 시도해주세요.');
+            console.error(error);
+        });
+    });
+}
+
+/**
+ * HTML 이스케이프 함수
+ * @param {string} text
+ * @returns {string}
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ========================================
+// 페이지 언로드 시 정리 작업 (선택사항)
+// ========================================
+
 window.addEventListener('beforeunload', () => {
     // Firebase 리스너 정리
     const namesRef = getRef('names');
