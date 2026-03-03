@@ -317,19 +317,25 @@ function renderMenuList(category, keyword = '') {
         // 메뉴 선택 시 온도 버튼 표시/숨김
         input.addEventListener('change', () => {
             if (input.checked) {
-                // 단일 선택 모드(라디오)인 경우, 다른 모든 온도 버튼 숨기기
-                if (!isMultiOrderMode) {
-                    document.querySelectorAll('.temp-buttons').forEach(tb => {
-                        if (tb.id !== `temp-${index}`) {
-                            tb.style.display = 'none';
-                            // 다른 버튼들 기본값으로 리셋
-                            const tempIce = tb.querySelector('.temp-ice, .temp-ice-btn');
-                            const tempHot = tb.querySelector('.temp-hot, .temp-hot-btn');
-                            if (tempIce) tempIce.classList.add('active');
-                            if (tempHot) tempHot.classList.remove('active');
-                        }
-                    });
+                // 여러 개 주문하기 모드: 체크박스 클릭으로는 체크되지 않음 (버튼으로만 체크)
+                if (isMultiOrderMode) {
+                    input.checked = false;
+                    // 온도 버튼만 표시
+                    tempButtons.style.display = 'flex';
+                    return;
                 }
+
+                // 단일 선택 모드(라디오)인 경우, 다른 모든 온도 버튼 숨기기
+                document.querySelectorAll('.temp-buttons').forEach(tb => {
+                    if (tb.id !== `temp-${index}`) {
+                        tb.style.display = 'none';
+                        // 다른 버튼들 기본값으로 리셋
+                        const tempIce = tb.querySelector('.temp-ice, .temp-ice-btn');
+                        const tempHot = tb.querySelector('.temp-hot, .temp-hot-btn');
+                        if (tempIce) tempIce.classList.add('active');
+                        if (tempHot) tempHot.classList.remove('active');
+                    }
+                });
 
                 // ICE Only인 경우 ICE 버튼만 활성화
                 if (isIceOnly) {
@@ -1071,6 +1077,10 @@ function createTempControlGroup(menuName, temp) {
     mainBtn.addEventListener('click', () => {
         addToTempCart(menuName, temp);
         updateTempControlState(wrapper, menuName, temp);
+
+        // 해당 메뉴의 체크박스 체크
+        const checkbox = document.querySelector(`input[value="${menuName}"]`);
+        if (checkbox) checkbox.checked = true;
     });
 
     // ICE: - [ICE] , HOT: [HOT] -
