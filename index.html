@@ -186,8 +186,22 @@
             </div>
         </section>
 
+        <!-- 임시 장바구니 (여러 개 주문하기 모드용) -->
+        <section id="tempCartSection" class="temp-cart-section" style="display: none;">
+            <div class="temp-cart-header">
+                <h2>🛒 담은 음료 <span id="tempCartCount">(0개)</span></h2>
+                <button id="clearTempCartBtn" class="clear-temp-cart-btn" title="전체 비우기">🗑️</button>
+            </div>
+            <div id="tempCartList" class="temp-cart-list">
+                <div class="empty-message">선택한 음료가 없습니다</div>
+            </div>
+            <button id="addTempCartToCartBtn" class="btn-primary" style="margin-top: 15px;">
+                🛒 주문 담기
+            </button>
+        </section>
+
         <!-- 주문 담기 버튼 -->
-        <section class="action-section">
+        <section class="action-section" id="singleOrderSection">
             <button id="addToCartBtn" class="btn-primary">🛒 주문 담기</button>
             <button id="viewCartBtn" class="btn-secondary">📋 장바구니 보기</button>
         </section>
