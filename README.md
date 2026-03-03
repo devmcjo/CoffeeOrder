@@ -31,13 +31,13 @@ https://coffeeorder-94399.web.app/
 
 ```powershell
 # 프로젝트 디렉토리로 이동
-cd C:\Users\mcJo\.gemini\antigravity\scratch\mega-coffee-order
+cd E:\Study\coffeeorder
 
 # 간단한 HTTP 서버 실행 (Python 3)
-python -m http.server 8000
+npm run start
 
 # 또는 Node.js의 http-server 사용
-npx http-server -p 8000
+npm run start:node
 ```
 
 브라우저에서 `http://localhost:8000` 접속
@@ -63,15 +63,28 @@ firebase deploy
 ```
 mega-coffee-order/
 ├── index.html          # 주문 메인 페이지
-├── admin.html         # 이름 관리 페이지
+├── admin.html          # 이름 관리 페이지
+├── menu-admin.html     # 메뉴 관리 페이지
+├── favorites.html      # 즐겨찾기 관리 페이지
+├── history.html        # 구매 이력 페이지
+├── login.html          # 관리자 로그인 페이지
+├── settings.html       # 설정 페이지
 ├── css/
-│   └── style.css      # 스타일시트
+│   └── style.css       # 스타일시트
 ├── js/
-│   ├── menu-data.js   # 메가커피 메뉴 데이터 (158개)
+│   ├── app.js          # 주문 페이지 로직
+│   ├── admin.js        # 이름 관리 페이지 로직
+│   ├── favorites.js    # 즐겨찾기 관리 로직
 │   ├── firebase-config.js  # Firebase 설정
-│   ├── app.js         # 주문 페이지 로직
-│   └── admin.js       # 이름 관리 페이지 로직
-└── README.md          # 이 파일
+│   ├── menu-data.js    # 메가커피 메뉴 데이터 (158개)
+│   └── version.js      # 빌드 버전 정보
+├── tests/
+│   └── order.spec.js   # Playwright 테스트
+├── package.json        # NPM 설정
+├── playwright.config.js # 테스트 설정
+├── build.js            # 빌드/배포 스크립트
+├── firebase.json       # Firebase 설정
+└── README.md           # 이 파일
 ```
 
 ## 🎯 사용 방법
@@ -161,6 +174,6 @@ if (hours === 0 && minutes === 0 && seconds === 0) { ... }
 
 ---
 
-**마지막 업데이트**: 2026-02-04  
-**버전**: 1.26.2.21  
+**마지막 업데이트**: 2026-03-03
+**버전**: 1.26.3.0
 **라이선스**: MIT

@@ -417,11 +417,6 @@ section h2 span {
 .temp-minus-btn:active {
     transform: scale(0.95);
 }
-    display: flex;
-    gap: 8px;
-    padding: 8px 12px;
-    justify-content: center;
-}
 
 /* 단일 주문 모드 버튼 - 여러 개 주문하기 모드와 동일한 스타일 */
 .temp-btn,

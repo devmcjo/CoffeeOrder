@@ -1,0 +1,29 @@
+{
+  "name": "coffeeorder",
+  "version": "1.26.3.0",
+  "description": "메가커피 단체 주문을 효율적으로 취합하기 위한 웹 애플리케이션입니다.",
+  "main": "index.html",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:ui": "npx playwright test --ui",
+    "start": "python -m http.server 8000",
+    "start:node": "npx http-server -p 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devmcjo/CoffeeOrder.git"
+  },
+  "keywords": ["mega-coffee", "group-order", "firebase", "vanilla-js"],
+  "author": "devmcjo@gmail.com",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/devmcjo/CoffeeOrder/issues"
+  },
+  "homepage": "https://github.com/devmcjo/CoffeeOrder#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
