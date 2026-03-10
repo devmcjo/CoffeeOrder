@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature 필드 마이그레이션 (1회성)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info-box h3 {
+            font-size: 0.95rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .info-box li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .info-box li:before {
+            content: "•";
+            color: #667eea;
+            font-weight: bold;
+            position: absolute;
+            left: 5px;
+        }
+
+        .btn-migrate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .btn-migrate:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-migrate:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .result-box {
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            margin-top: 20px;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-box.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result-box.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result-box h3 {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .result-box p {
+            margin: 5px 0;
+            font-size: 0.95rem;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner.show {
+            display: block;
+        }
+
+        .spinner-circle {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Temperature 필드 마이그레이션</h1>
+        <p class="subtitle">1회성 실행 후 이 파일을 삭제하세요</p>
+
+        <div class="warning">
+            <strong>⚠️ 주의:</strong> 이 작업은 temperature 필드가 없는 모든 메뉴에 대해 일괄 업데이트를 수행합니다.
+            실행 전 Firebase DB 백업을 권장합니다.
+        </div>
+
+        <div class="info-box">
+            <h3>마이그레이션 규칙:</h3>
+            <ul>
+                <li><strong>ICE Only:</strong> 에이드&주스, 스묘디&프라페 카테고리</li>
+                <li><strong>ICE Only:</strong> 티 카테고리 중 "아이스" 포함 메뉴</li>
+                <li><strong>ICE Only:</strong> 메가리칸, 할메가커피, 왕메가헛개리칸, 왕메가카페라떼, 딸기라떼, 오레오초코</li>
+                <li><strong>Both:</strong> 그 외 모든 메뉴</li>
+            </ul>
+        </div>
+
+        <button class="btn-migrate" id="migrateBtn" onclick="runMigration()">
+            마이그레이션 실행
+        </button>
+
+        <div class="spinner" id="spinner">
+            <div class="spinner-circle"></div>
+            <p>처리 중...</p>
+        </div>
+
+        <div id="resultBox" class="result-box">
+            <h3 id="resultTitle"></h3>
+            <p id="resultMessage"></p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3Rq-NkrFKIp5-9H5O0dD_PqOHMp11ORs",
+            authDomain: "coffeeorder-94399.firebaseapp.com",
+            databaseURL: "https://coffeeorder-94399-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "coffeeorder-94399",
+            storageBucket: "coffeeorder-94399.firebasestorage.app",
+            messagingSenderId: "405327810135",
+            appId: "1:405327810135:web:563bbf87ddfa67160e5c39",
+            measurementId: "G-CDP2C9ZHE8"
+        };
+
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+
+        async function runMigration() {
+            const btn = document.getElementById('migrateBtn');
+            const spinner = document.getElementById('spinner');
+            const resultBox = document.getElementById('resultBox');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+
+            if (!confirm('마이그레이션을 실행하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?')) {
+                return;
+            }
+
+            btn.disabled = true;
+            spinner.classList.add('show');
+            resultBox.classList.remove('show');
+
+            try {
+                const itemsRef = firebase.database().ref('menu/items');
+                const snapshot = await itemsRef.once('value');
+                const items = snapshot.val() || {};
+
+                let updatedCount = 0;
+                let skippedCount = 0;
+                const updates = {};
+
+                // ICE Only 키워드
+                const iceOnlyKeywords = ['메가리칸', '할메가커피', '왕메가헛개리칸', '왕메가카페라떼', '딸기라떼', '오레오초코'];
+
+                for (const [key, item] of Object.entries(items)) {
+                    // 이미 temperature 필드가 있으면 스킵
+                    if (item.temperature) {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    let temperature = 'both';
+
+                    // 1. 카테고리 기반 체크
+                    if (item.category) {
+                        // 에이드&주스, 스묘디&프라페 → ice_only
+                        if (item.category === '에이드&주스' || item.category === '스묘디&프라페') {
+                            temperature = 'ice_only';
+                        }
+                        // 티 카테고리 + 아이스 포함 → ice_only
+                        else if (item.category === '티' && item.name && item.name.includes('아이스')) {
+                            temperature = 'ice_only';
+                        }
+                    }
+
+                    // 2. 이름 기반 체크 (ice_only로 설정되지 않은 경우만)
+                    if (temperature === 'both' && item.name) {
+                        if (iceOnlyKeywords.some(keyword => item.name.includes(keyword))) {
+                            temperature = 'ice_only';
+                        }
+                    }
+
+                    // 업데이트 준비
+                    updates[`menu/items/${key}/temperature`] = temperature;
+                    updatedCount++;
+                }
+
+                // 일괄 업데이트 실행
+                if (Object.keys(updates).length > 0) {
+                    await firebase.database().ref().update(updates);
+                }
+
+                // 결과 표시
+                resultBox.className = 'result-box success show';
+                resultTitle.textContent = '✅ 마이그레이션 완료';
+                resultMessage.innerHTML = `
+                    업데이트된 메뉴: <strong>${updatedCount}개</strong><br>
+                    스킵된 메뉴 (이미 존재): <strong>${skippedCount}개</strong><br><br>
+                    <span style="color: #666; font-size: 0.9rem;">
+                        이제 이 파일(migrate-temperature.html)을 삭제하셔도 됩니다.<br>
+                        menu-admin.html의 "메뉴 관리"에서 개별 수정이 가능합니다.
+                    </span>
+                `;
+
+            } catch (error) {
+                console.error('마이그레이션 실패:', error);
+                resultBox.className = 'result-box error show';
+                resultTitle.textContent = '❌ 마이그레이션 실패';
+                resultMessage.textContent = error.message;
+            } finally {
+                btn.disabled = false;
+                spinner.classList.remove('show');
+            }
+        }
+    </script>
+</body>
+</html>
