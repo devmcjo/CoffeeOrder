@@ -24,5 +24,9 @@ npm-debug.log*
 *.tmp
 *.temp
 
+# claude setting
+.claude/settings.local.json
+
 # Test Case
+playwright.config.js
 tests/results/
