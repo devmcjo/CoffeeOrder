@@ -16,8 +16,8 @@ const TEST_USER = `${TEST_PREFIX}User_${timestamp}`;
 // 지연 함수
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// DB 로딩 대기 (800ms)
-const waitForDB = async () => await delay(800);
+// DB 로딩 대기 (1500ms) - Firebase 동기화 고려
+const waitForDB = async () => await delay(1500);
 // 일반 대기 (250ms - 300ms 미만)
 const shortDelay = async () => await delay(250);
 // 검색 디바운스 대기 (600ms)
