@@ -1179,7 +1179,7 @@ function getTemperatureLimit(menuName, category, menuItem) {
     }
 
     // ICE Only 메뉴 (이름 포함 체크 - 디카페인 고려)
-    const iceOnlyKeywords = ['메가리칸', '할메가커피', '왕메가헛개리칸', '왕메가카페라떼', '딸기라떼', '오레오초코'];
+    const iceOnlyKeywords = ['메가리카노', '할메가커피', '왕메가헛개리카노', '왕메가카페라떼', '딸기라떼', '오레오초코'];
     if (iceOnlyKeywords.some(keyword => menuName.includes(keyword))) {
         return 'ice_only';
     }
