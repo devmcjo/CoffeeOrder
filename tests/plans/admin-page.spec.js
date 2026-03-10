@@ -349,31 +349,8 @@ test.describe('관리자 페이지 테스트', () => {
     await cleanupTestCategory(page, TEST_CATEGORY);
   });
 
-  // TC-ADMIN-017: 카테고리 삭제 시 관련 메뉴 함께 삭제
-  test('TC-ADMIN-017: 카테고리 삭제 시 메뉴 삭제', async ({ page }) => {
-    await loginAsAdmin(page);
-    await page.goto('http://localhost:8000/menu-admin.html');
-    await waitForDB();
-
-    // 카테고리와 메뉴 생성
-    await createTestCategory(page, TEST_CATEGORY);
-    await createTestMenu(page, TEST_CATEGORY, TEST_MENU1);
-
-    // 카테고리 삭제
-    const categoryItem = page.locator(`.category-item:has-text("${TEST_CATEGORY}")`);
-    const deleteBtn = categoryItem.locator('.btn-danger').first();
-    await deleteBtn.click();
-    await shortDelay();
-
-    // 확인 대화상자 처리
-    page.on('dialog', async dialog => {
-      await dialog.accept();
-    });
-    await waitForDB();
-
-    const deletedCategory = page.locator(`text=${TEST_CATEGORY}`);
-    expect(await deletedCategory.count()).toBe(0);
-  });
+  // TC-ADMIN-017: [삭제됨] 카테고리 삭제는 관리자(admin)만 가능, 매니저 계정으로 테스트 불가
+  // 참고: 테스트 계정(admin_test)은 manager 권한이므로 카테고리 삭제 테스트는 제외
 
   // TC-ADMIN-018: 테스트 메뉴 개별 삭제
   test('TC-ADMIN-018: 테스트 메뉴 개별 삭제', async ({ page }) => {
