@@ -32,14 +32,33 @@ test.describe('메인 화면 테스트', () => {
    * 1.1 화면 표시 기본 테스트
    */
 
-  // TC-MAIN-001: 페이지 로드 및 기본 레이아웃 확인
-  test('TC-MAIN-001: 페이지 로드 및 기본 레이아웃 확인', async ({ page }) => {
+  // TC-MAIN-001-01: 페이지 로드 및 기본 레이아웃 확인
+  test('TC-MAIN-001-01: 페이지 로드 및 기본 레이아웃 확인', async ({ page }) => {
     await expect(page).toHaveTitle(/메가커피/);
     await expect(page.locator('header h1')).toContainText('메가커피 단체 주문');
     await expect(page.locator('#nameSelect')).toBeVisible();
     await expect(page.locator('#menuList')).toBeVisible();
     await expect(page.locator('#searchInput')).toBeVisible();
     await expect(page.locator('#viewCartBtn')).toBeVisible();
+  });
+
+  // TC-MAIN-001-02: 페이지 반응형 UI 확인
+  test('TC-MAIN-001-02: 페이지 반응형 UI 확인', async ({ page }) => {
+    // 모바일 뷰포트 (375x667)
+    await page.setViewportSize({ width: 375, height: 667 });
+    await shortDelay();
+    await expect(page.locator('header h1')).toBeVisible();
+    await expect(page.locator('#nameSelect')).toBeVisible();
+
+    // 태블릿 뷰포트 (768x1024)
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await shortDelay();
+    await expect(page.locator('header h1')).toBeVisible();
+    await expect(page.locator('#menuList')).toBeVisible();
+
+    // 데스크톱 뷰포트 복원 (1280x720)
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await shortDelay();
   });
 
   // TC-MAIN-002: 이름 선택 드롭다운 기본 상태 확인

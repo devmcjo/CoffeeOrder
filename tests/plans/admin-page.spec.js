@@ -169,7 +169,7 @@ test.describe('관리자 페이지 테스트', () => {
     await waitForDB();
 
     // 삭제 버튼 클릭 (이름 아이템 내의 삭제 버튼)
-    const deleteBtn = page.locator(`#namesList div:has-text("${TEST_USER}") button.delete-btn, #namesList .name-item:has-text("${TEST_USER}") .delete-btn`).first();
+    const deleteBtn = page.locator(`#namesList .name-item:has-text("${TEST_USER}") .btn-danger, #namesList div:has-text("${TEST_USER}") button`).first();
     if (await deleteBtn.isVisible().catch(() => false)) {
       await deleteBtn.click();
       await shortDelay();
@@ -178,7 +178,7 @@ test.describe('관리자 페이지 테스트', () => {
       await waitForDB();
     }
 
-    const deletedName = page.locator(`text=${TEST_USER}`);
+    const deletedName = page.locator(`#namesList .name-item:has-text("${TEST_USER}")`);
     expect(await deletedName.count()).toBe(0);
   });
 

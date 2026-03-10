@@ -62,34 +62,34 @@ firebase deploy
 
 ```
 mega-coffee-order/
-├── index.html          # 주문 메인 페이지
-├── admin.html          # 이름 관리 페이지
-├── menu-admin.html     # 메뉴 관리 페이지
-├── favorites.html      # 즐겨찾기 관리 페이지
-├── history.html        # 구매 이력 페이지
-├── login.html          # 관리자 로그인 페이지
-├── settings.html       # 설정 페이지
+├── index.html                  # 주문 메인 페이지
+├── admin.html                  # 이름(주문자) 관리 페이지
+├── menu-admin.html             # 메뉴 관리 페이지
+├── favorites.html              # 즐겨찾기 관리 페이지
+├── history.html                # 구매 이력 페이지
+├── login.html                  # 관리자 로그인 페이지
+├── settings.html               # 설정 페이지
 ├── css/
-│   └── style.css       # 스타일시트
+│   └── style.css               # 스타일시트
 ├── js/
-│   ├── app.js          # 주문 페이지 로직
-│   ├── admin.js        # 이름 관리 페이지 로직
-│   ├── favorites.js    # 즐겨찾기 관리 로직
-│   ├── firebase-config.js  # Firebase 설정
-│   ├── menu-data.js    # 메가커피 메뉴 데이터 - DB 접근 실패 시 백업용 하드코딩 (158개)
-│   └── version.js      # 빌드 버전 정보
+│   ├── app.js                  # 주문 페이지 로직
+│   ├── admin.js                # 이름 관리 페이지 로직
+│   ├── favorites.js            # 즐겨찾기 관리 로직
+│   ├── firebase-config.js      # Firebase 설정
+│   ├── menu-data.js            # 메가커피 메뉴 데이터 - DB 접근 실패 시 백업용 하드코딩 (158개)
+│   └── version.js              # 빌드 버전 정보
 ├── tests/
-│   ├── README.md       # Playwright 테스트
-│   ├── TEST_CASES.md   # 전체 테스트 케이스 목록
-│   ├── plans/           # 테스트 진행 계획 폴더
-│   │   ├── admin-page.spec.js # admin 페이지 테스트 계획
-│   │   └── main-page.spec.js # main 페이지 테스트 계획
-│   └── results/        # 테스트 진행 산출물 (Screenshot 등)
-├── package.json        # NPM 설정
-├── playwright.config.js # 테스트 설정
-├── build.js            # 빌드/배포 스크립트
-├── firebase.json       # Firebase 설정
-└── README.md           # 이 파일
+│   ├── README.md               # Playwright 테스트
+│   ├── TEST_CASES.md           # 전체 테스트 케이스 목록
+│   ├── plans/                  # 테스트 진행 계획 폴더
+│   │   ├── admin-page.spec.js  # admin 페이지 테스트 계획
+│   │   └── main-page.spec.js   # main 페이지 테스트 계획
+│   └── results/                # 테스트 결과 산출물 경로
+├── package.json                # NPM 설정
+├── playwright.config.js        # 테스트 설정
+├── build.js                    # 빌드/배포 스크립트
+├── firebase.json               # Firebase 설정
+└── README.md                   # 이 파일
 ```
 
 ## 🎯 사용 방법
@@ -115,11 +115,6 @@ mega-coffee-order/
 ### 메뉴 업데이트
 
 DB 접근 실패 시에는 `js/menu-data.js` 파일에 저장된 메뉴로 불러옵니다.
-
-```javascript
-// 메뉴 추가 예시
-{ name: "신메뉴이름", category: "커피" }
-```
 
 ### Firebase 설정 변경
 
@@ -170,7 +165,6 @@ if (hours === 0 && minutes === 0 && seconds === 0) { ... }
 
 - Chrome, Safari, Edge 등 최신 브라우저 사용
 - 홈 화면에 추가하면 앱처럼 사용 가능
-- WiFi가 아닌 모바일 데이터로도 사용 가능
 
 ## 📞 문의
 
