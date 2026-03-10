@@ -277,21 +277,31 @@ function renderMenuList(category, keyword = '') {
         tempButtons.style.display = 'none'; // 기본적으로 숨김
         tempButtons.id = `temp-${index}`;
 
-        // ICE Only 체크 (중앙화된 함수 사용)
-        const isIceOnly = checkIsIceOnly(item.name, item.category);
+        // 온도 제한 설정 가져오기 (중앙화된 함수 사용)
+        const tempLimit = getTemperatureLimit(item.name, item.category, item);
+        const isIceOnly = tempLimit === 'ice_only';
+        const isHotOnly = tempLimit === 'hot_only';
 
         const iceBtn = document.createElement('button');
+        const hotBtn = document.createElement('button');
+
+        // ICE 버튼 기본 설정
         iceBtn.type = 'button';
-        iceBtn.className = 'temp-btn temp-ice active'; // 기본 ICE
+        iceBtn.className = 'temp-btn temp-ice';
         iceBtn.textContent = '🧊 ICE';
         iceBtn.dataset.temp = 'ICE';
         iceBtn.dataset.index = index;
 
-        tempButtons.appendChild(iceBtn);
+        // HOT 버튼 기본 설정
+        hotBtn.type = 'button';
+        hotBtn.className = 'temp-btn temp-hot';
+        hotBtn.textContent = '🔥 HOT';
+        hotBtn.dataset.temp = 'HOT';
+        hotBtn.dataset.index = index;
 
         // 여러 개 주문하기 모드: 통합된 UI 사용
         if (isMultiOrderMode) {
-            renderMultiOrderTempControls(tempButtons, item.name, isIceOnly);
+            renderMultiOrderTempControls(tempButtons, item.name, isIceOnly, isHotOnly, tempLimit);
         } else {
             // 단일 주문 모드
             if (isIceOnly) {
@@ -300,15 +310,18 @@ function renderMenuList(category, keyword = '') {
                 iceBtn.innerHTML = '🧊 ICE';
                 iceBtn.style.width = '100%';
                 iceBtn.style.justifyContent = 'center';
+                tempButtons.appendChild(iceBtn);
+            } else if (isHotOnly) {
+                // HOT Only: HOT 버튼만 표시 (가울데 정렬, temp-main-btn 스타일)
+                hotBtn.className = 'temp-main-btn temp-hot-btn active';
+                hotBtn.innerHTML = '🔥 HOT';
+                hotBtn.style.width = '100%';
+                hotBtn.style.justifyContent = 'center';
+                tempButtons.appendChild(hotBtn);
             } else {
-                // 일반 메뉴: ICE/HOT 버튼 모두 표시
-                const hotBtn = document.createElement('button');
-                hotBtn.type = 'button';
-                hotBtn.className = 'temp-btn temp-hot';
-                hotBtn.textContent = '🔥 HOT';
-                hotBtn.dataset.temp = 'HOT';
-                hotBtn.dataset.index = index;
-
+                // 일반 메뉴: ICE/HOT 버튼 모두 표시 (기본 ICE 선택)
+                iceBtn.classList.add('active');
+                tempButtons.appendChild(iceBtn);
                 tempButtons.appendChild(hotBtn);
                 setupSingleOrderTempControls(iceBtn, hotBtn);
             }
@@ -337,16 +350,24 @@ function renderMenuList(category, keyword = '') {
                     }
                 });
 
-                // ICE Only인 경우 ICE 버튼만 활성화
+                // 온도 제한에 따른 버튼 활성화
                 if (isIceOnly) {
                     iceBtn.classList.add('active');
+                } else if (isHotOnly) {
+                    hotBtn.classList.add('active');
                 }
 
                 tempButtons.style.display = 'flex';
             } else {
                 tempButtons.style.display = 'none';
-                // 기본값으로 ICE 선택 (상태 초기화)
-                iceBtn.classList.add('active');
+                // 기본값으로 리셋
+                iceBtn.classList.remove('active');
+                hotBtn.classList.remove('active');
+                if (!isHotOnly) {
+                    iceBtn.classList.add('active');
+                } else {
+                    hotBtn.classList.add('active');
+                }
             }
         });
 
@@ -1024,13 +1045,17 @@ function setupSingleOrderTempControls(iceBtn, hotBtn, isIceOnly) {
  * @param {HTMLElement} container - 버튼을 추가할 컨테이너
  * @param {string} menuName - 메뉴 이름
  * @param {boolean} isIceOnly - ICE Only 여부
+ * @param {boolean} isHotOnly - HOT Only 여부
+ * @param {string} tempLimit - 온도 제한 값 ("both" | "ice_only" | "hot_only")
  */
-function renderMultiOrderTempControls(container, menuName, isIceOnly) {
+function renderMultiOrderTempControls(container, menuName, isIceOnly, isHotOnly, tempLimit) {
     container.innerHTML = '';
     container.classList.add('multi-mode');
 
-    // ICE 컨트롤
-    container.appendChild(createTempControlGroup(menuName, 'ICE'));
+    // ICE 컨트롤 (HOT Only가 아닌 경우)
+    if (!isHotOnly) {
+        container.appendChild(createTempControlGroup(menuName, 'ICE'));
+    }
 
     // HOT 컨트롤 (ICE Only가 아닌 경우)
     if (!isIceOnly) {
@@ -1125,38 +1150,57 @@ function updateTempControlState(wrapper, menuName, temp) {
 }
 
 // ========================================
-// ICE Only 체크 함수 (단일 소스 오브 트루스)
+// 온도 제한 체크 함수 (단일 소스 오브 트루스)
 // ========================================
 
 /**
- * 메뉴가 ICE Only인지 확인
+ * 메뉴의 온도 제한 설정을 가져옴
+ * @param {string} menuName - 메뉴 이름
+ * @param {string} category - 카테고리 (선택적)
+ * @param {Object} menuItem - 메뉴 아이템 객체 (DB에서 가져온 데이터, 선택적)
+ * @returns {string} 온도 제한 값: "both" | "ice_only" | "hot_only"
+ */
+function getTemperatureLimit(menuName, category, menuItem) {
+    // 1. DB에서 temperature 필드가 있으면 우선 사용
+    if (menuItem && menuItem.temperature) {
+        return menuItem.temperature;
+    }
+
+    // 2. Fallback: 카테고리/이름 기반 판단 (DB 마이그레이션 전용)
+    if (category) {
+        // ICE Only 카테고리
+        if (['에이드&주스', '스무디&프라페'].includes(category)) {
+            return 'ice_only';
+        }
+        // 아이스 티
+        if (category === '티' && menuName.includes('아이스')) {
+            return 'ice_only';
+        }
+    }
+
+    // ICE Only 메뉴 (이름 포함 체크 - 디카페인 고려)
+    const iceOnlyKeywords = ['메가리칸', '할메가커피', '왕메가헛개리칸', '왕메가카페라떼', '딸기라떼', '오레오초코'];
+    if (iceOnlyKeywords.some(keyword => menuName.includes(keyword))) {
+        return 'ice_only';
+    }
+
+    // 기본값: both
+    return 'both';
+}
+
+// ========================================
+// 레거시 함수 (하위 호환성 유지)
+// ========================================
+
+/**
+ * 메뉴가 ICE Only인지 확인 (레거시)
+ * @deprecated getTemperatureLimit 사용 권장
  * @param {string} menuName - 메뉴 이름
  * @param {string} category - 카테고리 (선택적)
  * @returns {boolean} ICE Only 여부
  */
 function checkIsIceOnly(menuName, category) {
-    // 카테고리 기반 체크
-    if (category) {
-        if (['에이드&주스', '스무디&프라페'].includes(category)) {
-            return true;
-        }
-        if (category === '티' && menuName.includes('아이스')) {
-            return true;
-        }
-    }
-
-    // 메뉴 이름 기반 체크 (디카페인 존재)
-    const iceOnlyKeywords = ['메가리카노', '할메가커피', '왕메가헛개리카노', '왕메가카페라떼'];
-    if (iceOnlyKeywords.some(keyword => menuName.includes(keyword))) {
-        return true;
-    }
-
-    // 정확한 이름 매칭
-    if (menuName === '딸기라떼' || menuName === '오레오초코') {
-        return true;
-    }
-
-    return false;
+    return getTemperatureLimit(menuName, category) === 'ice_only';
 }
 
 // ========================================
@@ -1192,12 +1236,15 @@ function updateMultiOrderModeUI() {
  * @param {string} temp - 온도 (ICE/HOT)
  */
 function addToTempCart(menuName, temp) {
-    // ICE Only 메뉴 체크 (중앙화된 함수 사용)
+    // 온도 제한 체크 (중앙화된 함수 사용)
     const menuItem = MENU_DATA.find(item => item.name === menuName);
-    const isIceOnly = menuItem ? checkIsIceOnly(menuName, menuItem.category) : false;
+    const tempLimit = menuItem ? getTemperatureLimit(menuName, menuItem.category, menuItem) : 'both';
 
-    // ICE Only 메뉴는 HOT 선택 불가
-    if (isIceOnly && temp === 'HOT') {
+    // ICE Only 메뉴는 HOT 선택 불가, HOT Only 메뉴는 ICE 선택 불가
+    if (tempLimit === 'ice_only' && temp === 'HOT') {
+        return;
+    }
+    if (tempLimit === 'hot_only' && temp === 'ICE') {
         return;
     }
 

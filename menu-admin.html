@@ -70,6 +70,78 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        /* 온도 설정 라디오 버튼 스타일 */
+        .temperature-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .radio-label:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .radio-label input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        .radio-label input[type="radio"]:checked + .radio-text {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .radio-label:has(input[type="radio"]:checked) {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .radio-text {
+            font-size: 0.95rem;
+            color: #444;
+        }
+
+        /* 메뉴 온도 배지 스타일 */
+        .temp-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        .temp-badge.ice-only {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+
+        .temp-badge.hot-only {
+            background: #ffebee;
+            color: #d32f2f;
+            border: 1px solid #ffcdd2;
+        }
+
+        .temp-badge.both {
+            background: #f3e5f5;
+            color: #7b1fa2;
+            border: 1px solid #e1bee7;
+        }
+
         .form-input.error {
             border-color: #ff6b6b;
             background: #fff5f5;
@@ -283,6 +355,23 @@
                     <select id="newMenuCategory" class="form-select">
                         <option value="">카테고리를 선택하세요</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>온도 설정</label>
+                    <div class="temperature-options">
+                        <label class="radio-label">
+                            <input type="radio" name="menuTemperature" value="both" checked>
+                            <span class="radio-text">🧊 ICE / 🔥 HOT 모두 가능</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="menuTemperature" value="ice_only">
+                            <span class="radio-text">🧊 ICE Only</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="menuTemperature" value="hot_only">
+                            <span class="radio-text">🔥 HOT Only</span>
+                        </label>
+                    </div>
                 </div>
                 <button class="btn-primary" onclick="addMenu()">메뉴 추가</button>
                 <span id="menuError" class="error-text" style="margin-top: 10px; display: block;"></span>
@@ -512,10 +601,12 @@
         async function addMenu() {
             const nameInput = document.getElementById('newMenuName');
             const categorySelect = document.getElementById('newMenuCategory');
+            const temperatureRadio = document.querySelector('input[name="menuTemperature"]:checked');
             const errorText = document.getElementById('menuError');
 
             const name = nameInput.value.trim();
             const category = categorySelect.value;
+            const temperature = temperatureRadio ? temperatureRadio.value : 'both';
 
             if (!name) {
                 errorText.textContent = '메뉴 이름을 입력해주세요.';
@@ -551,11 +642,14 @@
 
                 await itemsRef.child(newKey).set({
                     name: name,
-                    category: category
+                    category: category,
+                    temperature: temperature
                 });
 
                 nameInput.value = '';
                 categorySelect.value = '';
+                // 온도 선택 초기화 (both로)
+                document.querySelector('input[name="menuTemperature"][value="both"]').checked = true;
                 showSuccess('메뉴가 추가되었습니다.');
                 loadMenuList();
             } catch (error) {
@@ -589,11 +683,21 @@
 
                 let html = '';
                 filteredItems.forEach(([key, item]) => {
+                    // 온도 설정 표시
+                    let tempBadge = '';
+                    if (item.temperature === 'ice_only') {
+                        tempBadge = '<span class="temp-badge ice-only">🧊 ICE Only</span>';
+                    } else if (item.temperature === 'hot_only') {
+                        tempBadge = '<span class="temp-badge hot-only">🔥 HOT Only</span>';
+                    } else {
+                        tempBadge = '<span class="temp-badge both">🧊 ICE / 🔥 HOT</span>';
+                    }
+
                     html += `
                         <div class="menu-item">
                             <div>
                                 <div class="menu-name">${escapeHtml(item.name)}</div>
-                                <div class="menu-category">${escapeHtml(item.category)}</div>
+                                <div class="menu-category">${escapeHtml(item.category)} ${tempBadge}</div>
                             </div>
                             <button class="btn-danger" onclick="deleteMenu('${key}')">삭제</button>
                         </div>
