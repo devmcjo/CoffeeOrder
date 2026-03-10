@@ -594,11 +594,14 @@
             Object.entries(categories).forEach(([key, category]) => {
                 if (!category) return;
 
-                // 관리자만 수정/삭제 버튼 표시
-                const actionButtons = userRole === 'admin'
-                    ? `<button class="btn-secondary" onclick="enableEditCategory('${key}')">수정</button>
-                       <button class="btn-danger" onclick="deleteCategory('${key}')">삭제</button>`
+                // 관리자와 매니저는 수정 버튼 표시, 삭제는 관리자만
+                const editButton = (userRole === 'admin' || userRole === 'manager')
+                    ? `<button class="btn-secondary" onclick="enableEditCategory('${key}')">수정</button>`
                     : '';
+                const deleteButton = userRole === 'admin'
+                    ? `<button class="btn-danger" onclick="deleteCategory('${key}')">삭제</button>`
+                    : '';
+                const actionButtons = editButton + deleteButton;
 
                 html += `
                     <div class="category-item" data-key="${key}" id="category-${key}">
@@ -649,8 +652,8 @@
         // 카테고리 수정 저장
         async function saveCategoryEdit(key) {
             const userRole = localStorage.getItem('coffeeOrder_role');
-            if (userRole !== 'admin') {
-                alert('관리자만 카테고리를 수정할 수 있습니다.');
+            if (userRole !== 'admin' && userRole !== 'manager') {
+                alert('관리자와 매니저만 카테고리를 수정할 수 있습니다.');
                 return;
             }
 
