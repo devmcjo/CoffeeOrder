@@ -241,6 +241,40 @@
             margin-top: 3px;
         }
 
+        /* 카테고리 수정 관련 스타일 */
+        .category-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .category-item:hover .category-actions {
+            opacity: 1;
+        }
+
+        .category-edit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .category-edit-form .form-input {
+            padding: 8px 12px;
+            font-size: 0.95rem;
+        }
+
+        .category-edit-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .category-edit-actions button {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
         .error-text {
             color: #ff6b6b;
             font-size: 0.85rem;
@@ -507,20 +541,121 @@
             Object.entries(categories).forEach(([key, category]) => {
                 if (!category) return;
 
-                // 관리자만 삭제 버튼 표시
-                const deleteButton = userRole === 'admin'
-                    ? `<button class="btn-danger" onclick="deleteCategory('${key}')">삭제</button>`
+                // 관리자만 수정/삭제 버튼 표시
+                const actionButtons = userRole === 'admin'
+                    ? `<button class="btn-secondary" onclick="enableEditCategory('${key}')">수정</button>
+                       <button class="btn-danger" onclick="deleteCategory('${key}')">삭제</button>`
                     : '';
 
                 html += `
-                    <div class="category-item" data-key="${key}">
+                    <div class="category-item" data-key="${key}" id="category-${key}">
                         <div class="category-name">${escapeHtml(category.name)}</div>
-                        ${deleteButton}
+                        <div class="category-actions">
+                            ${actionButtons}
+                        </div>
                     </div>
                 `;
             });
 
             listElement.innerHTML = html;
+        }
+
+        // 카테고리 수정 모드 활성화
+        function enableEditCategory(key) {
+            const category = categories[key];
+            if (!category) return;
+
+            const categoryItem = document.getElementById(`category-${key}`);
+            const currentName = escapeHtml(category.name);
+
+            categoryItem.innerHTML = `
+                <div class="category-edit-form">
+                    <input type="text" class="form-input" id="edit-category-name-${key}" value="${currentName}" maxlength="20">
+                    <div class="category-edit-actions">
+                        <button class="btn-primary" onclick="saveCategoryEdit('${key}')">저장</button>
+                        <button class="btn-secondary" onclick="cancelCategoryEdit('${key}')">취소</button>
+                    </div>
+                </div>
+            `;
+
+            // 입력 필드에 포커스
+            setTimeout(() => {
+                const input = document.getElementById(`edit-category-name-${key}`);
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }, 0);
+        }
+
+        // 카테고리 수정 취소
+        function cancelCategoryEdit(key) {
+            renderCategoryList();
+        }
+
+        // 카테고리 수정 저장
+        async function saveCategoryEdit(key) {
+            const userRole = localStorage.getItem('coffeeOrder_role');
+            if (userRole !== 'admin') {
+                alert('관리자만 카테고리를 수정할 수 있습니다.');
+                return;
+            }
+
+            const nameInput = document.getElementById(`edit-category-name-${key}`);
+            const newName = nameInput.value.trim();
+            const oldName = categories[key]?.name;
+
+            if (!newName) {
+                alert('카테고리 이름을 입력해주세요.');
+                return;
+            }
+
+            if (newName === oldName) {
+                cancelCategoryEdit(key);
+                return;
+            }
+
+            // 중복 확인
+            const existingCategory = Object.values(categories).find(cat => cat && cat.name === newName);
+            if (existingCategory) {
+                alert('이미 존재하는 카테고리 이름입니다.');
+                return;
+            }
+
+            try {
+                // 1. 카테고리 이름 업데이트
+                await getRef(`menu/categories/${key}`).update({ name: newName });
+
+                // 2. 해당 카테고리의 모든 메뉴 업데이트
+                const itemsRef = getRef('menu/items');
+                const snapshot = await itemsRef.once('value');
+                const items = snapshot.val() || {};
+
+                let updatedCount = 0;
+                const updates = {};
+
+                for (const [itemKey, item] of Object.entries(items)) {
+                    if (item.category === oldName) {
+                        updates[`menu/items/${itemKey}/category`] = newName;
+                        updatedCount++;
+                    }
+                }
+
+                // 일괄 업데이트
+                if (Object.keys(updates).length > 0) {
+                    await firebase.database().ref().update(updates);
+                }
+
+                // 로컬 데이터 업데이트
+                categories[key].name = newName;
+
+                showSuccess(`카테고리 이름이 '${oldName}'에서 '${newName}'으로 변경되었습니다. (${updatedCount}개 메뉴 업데이트)`);
+                renderCategoryList();
+                loadCategorySelect(); // 드롭다운 새로고침
+            } catch (error) {
+                console.error('카테고리 수정 실패:', error);
+                alert('카테고리 수정에 실패했습니다.');
+            }
         }
 
         // 카테고리 삭제
