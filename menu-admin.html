@@ -275,6 +275,59 @@
             font-size: 0.85rem;
         }
 
+        /* 메뉴 수정 관련 스타일 */
+        .menu-info {
+            flex: 1;
+        }
+
+        .menu-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .menu-item:hover .menu-actions {
+            opacity: 1;
+        }
+
+        .menu-edit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .menu-edit-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .menu-edit-row label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .menu-edit-row .form-input,
+        .menu-edit-row .form-select {
+            padding: 10px;
+            font-size: 0.95rem;
+        }
+
+        .menu-edit-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .menu-edit-actions button {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
         .error-text {
             color: #ff6b6b;
             font-size: 0.85rem;
@@ -818,29 +871,170 @@
 
                 let html = '';
                 filteredItems.forEach(([key, item]) => {
-                    // 온도 설정 표시
-                    let tempBadge = '';
-                    if (item.temperature === 'ice_only') {
-                        tempBadge = '<span class="temp-badge ice-only">🧊 ICE Only</span>';
-                    } else if (item.temperature === 'hot_only') {
-                        tempBadge = '<span class="temp-badge hot-only">🔥 HOT Only</span>';
-                    } else {
-                        tempBadge = '<span class="temp-badge both">🧊 ICE / 🔥 HOT</span>';
-                    }
-
-                    html += `
-                        <div class="menu-item">
-                            <div>
-                                <div class="menu-name">${escapeHtml(item.name)}</div>
-                                <div class="menu-category">${escapeHtml(item.category)} ${tempBadge}</div>
-                            </div>
-                            <button class="btn-danger" onclick="deleteMenu('${key}')">삭제</button>
-                        </div>
-                    `;
+                    html += renderMenuItem(key, item);
                 });
 
                 listElement.innerHTML = html;
             });
+        }
+
+        // 메뉴 아이템 렌더링 (일반 모드)
+        function renderMenuItem(key, item) {
+            // 온도 설정 표시
+            let tempBadge = '';
+            if (item.temperature === 'ice_only') {
+                tempBadge = '<span class="temp-badge ice-only">🧊 ICE Only</span>';
+            } else if (item.temperature === 'hot_only') {
+                tempBadge = '<span class="temp-badge hot-only">🔥 HOT Only</span>';
+            } else {
+                tempBadge = '<span class="temp-badge both">🧊 ICE / 🔥 HOT</span>';
+            }
+
+            return `
+                <div class="menu-item" id="menu-${key}">
+                    <div class="menu-info">
+                        <div class="menu-name">${escapeHtml(item.name)}</div>
+                        <div class="menu-category">${escapeHtml(item.category)} ${tempBadge}</div>
+                    </div>
+                    <div class="menu-actions">
+                        <button class="btn-secondary" onclick="enableEditMenu('${key}')">수정</button>
+                        <button class="btn-danger" onclick="deleteMenu('${key}')">삭제</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 메뉴 수정 모드 활성화
+        async function enableEditMenu(key) {
+            const itemsRef = getRef('menu/items');
+            const snapshot = await itemsRef.once('value');
+            const items = snapshot.val() || {};
+            const item = items[key];
+
+            if (!item) {
+                alert('메뉴를 찾을 수 없습니다.');
+                return;
+            }
+
+            const menuItem = document.getElementById(`menu-${key}`);
+
+            // 카테고리 옵션 생성
+            let categoryOptions = '';
+            Object.values(categories).forEach(cat => {
+                if (cat && cat.name) {
+                    const selected = cat.name === item.category ? 'selected' : '';
+                    categoryOptions += `<option value="${escapeHtml(cat.name)}" ${selected}>${escapeHtml(cat.name)}</option>`;
+                }
+            });
+
+            // 온도 옵션
+            const tempOptions = `
+                <option value="both" ${item.temperature === 'both' || !item.temperature ? 'selected' : ''}>🧊 ICE / 🔥 HOT 모두 가능</option>
+                <option value="ice_only" ${item.temperature === 'ice_only' ? 'selected' : ''}>🧊 ICE Only</option>
+                <option value="hot_only" ${item.temperature === 'hot_only' ? 'selected' : ''}>🔥 HOT Only</option>
+            `;
+
+            menuItem.innerHTML = `
+                <div class="menu-edit-form">
+                    <div class="menu-edit-row">
+                        <label>메뉴 이름</label>
+                        <input type="text" class="form-input" id="edit-menu-name-${key}" value="${escapeHtml(item.name)}" maxlength="30">
+                    </div>
+                    <div class="menu-edit-row">
+                        <label>카테고리</label>
+                        <select class="form-select" id="edit-menu-category-${key}">
+                            ${categoryOptions}
+                        </select>
+                    </div>
+                    <div class="menu-edit-row">
+                        <label>온도 설정</label>
+                        <select class="form-select" id="edit-menu-temperature-${key}">
+                            ${tempOptions}
+                        </select>
+                    </div>
+                    <div class="menu-edit-actions">
+                        <button class="btn-primary" onclick="saveMenuEdit('${key}')">저장</button>
+                        <button class="btn-secondary" onclick="cancelMenuEdit('${key}')">취소</button>
+                    </div>
+                </div>
+            `;
+
+            // 입력 필드에 포커스
+            setTimeout(() => {
+                const input = document.getElementById(`edit-menu-name-${key}`);
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }, 0);
+        }
+
+        // 메뉴 수정 취소
+        async function cancelMenuEdit(key) {
+            const itemsRef = getRef('menu/items');
+            const snapshot = await itemsRef.once('value');
+            const items = snapshot.val() || {};
+            const item = items[key];
+
+            if (item) {
+                const menuItem = document.getElementById(`menu-${key}`);
+                menuItem.outerHTML = renderMenuItem(key, item);
+            }
+        }
+
+        // 메뉴 수정 저장
+        async function saveMenuEdit(key) {
+            const nameInput = document.getElementById(`edit-menu-name-${key}`);
+            const categorySelect = document.getElementById(`edit-menu-category-${key}`);
+            const temperatureSelect = document.getElementById(`edit-menu-temperature-${key}`);
+
+            const newName = nameInput.value.trim();
+            const newCategory = categorySelect.value;
+            const newTemperature = temperatureSelect.value;
+
+            if (!newName) {
+                alert('메뉴 이름을 입력해주세요.');
+                return;
+            }
+
+            try {
+                const itemsRef = getRef('menu/items');
+                const snapshot = await itemsRef.once('value');
+                const items = snapshot.val() || {};
+                const currentItem = items[key];
+
+                if (!currentItem) {
+                    alert('메뉴를 찾을 수 없습니다.');
+                    return;
+                }
+
+                // 이름이 변경되었을 경우 중복 확인
+                if (newName !== currentItem.name) {
+                    const existingItem = Object.values(items).find(item =>
+                        item && item.name === newName && Object.keys(items).find(k => items[k] === item) !== key
+                    );
+                    if (existingItem) {
+                        alert('이미 존재하는 메뉴 이름입니다.');
+                        return;
+                    }
+                }
+
+                // 업데이트할 데이터
+                const updates = {
+                    name: newName,
+                    category: newCategory,
+                    temperature: newTemperature
+                };
+
+                await getRef(`menu/items/${key}`).update(updates);
+                showSuccess('메뉴가 수정되었습니다.');
+
+                // 목록 새로고침
+                loadMenuList();
+            } catch (error) {
+                console.error('메뉴 수정 실패:', error);
+                alert('메뉴 수정에 실패했습니다.');
+            }
         }
 
         // 메뉴 삭제
