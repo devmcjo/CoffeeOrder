@@ -796,7 +796,7 @@ function addToCart() {
 
         // 온도 버튼에서 선택된 온도 가져오기
         const tempButtons = document.getElementById(`temp-${index}`);
-        const activeTemp = tempButtons.querySelector('.temp-btn.active');
+        const activeTemp = tempButtons.querySelector('.temp-btn.active, .temp-main-btn.active');
         const temp = activeTemp ? activeTemp.dataset.temp : 'ICE';
 
         // "음료명 (온도)" 형식으로 저장
