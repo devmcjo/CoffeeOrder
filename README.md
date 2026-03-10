@@ -76,10 +76,15 @@ mega-coffee-order/
 │   ├── admin.js        # 이름 관리 페이지 로직
 │   ├── favorites.js    # 즐겨찾기 관리 로직
 │   ├── firebase-config.js  # Firebase 설정
-│   ├── menu-data.js    # 메가커피 메뉴 데이터 (158개)
+│   ├── menu-data.js    # 메가커피 메뉴 데이터 - DB 접근 실패 시 백업용 하드코딩 (158개)
 │   └── version.js      # 빌드 버전 정보
 ├── tests/
-│   └── order.spec.js   # Playwright 테스트
+│   ├── README.md       # Playwright 테스트
+│   ├── TEST_CASES.md   # 전체 테스트 케이스 목록
+│   ├── plans/           # 테스트 진행 계획 폴더
+│   │   ├── admin-page.spec.js # admin 페이지 테스트 계획
+│   │   └── main-page.spec.js # main 페이지 테스트 계획
+│   └── results/        # 테스트 진행 산출물 (Screenshot 등)
 ├── package.json        # NPM 설정
 ├── playwright.config.js # 테스트 설정
 ├── build.js            # 빌드/배포 스크립트
@@ -109,7 +114,7 @@ mega-coffee-order/
 
 ### 메뉴 업데이트
 
-`js/menu-data.js` 파일을 수정하여 메뉴를 추가/삭제/수정할 수 있습니다.
+DB 접근 실패 시에는 `js/menu-data.js` 파일에 저장된 메뉴로 불러옵니다.
 
 ```javascript
 // 메뉴 추가 예시

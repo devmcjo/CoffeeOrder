@@ -117,7 +117,7 @@ function loadMenuDataFromFirebase() {
                         renderMenuList(currentCategory);
                     }
                 } else {
-                    console.warn('Firebase에 메뉴 데이터가 없습니다. save-all-menu-data.html에서 초기화해주세요.');
+                    console.warn('Firebase에 메뉴 데이터가 없습니다. 기본 저장된 메뉴로 불러옵니다.');
                     // 기본 데이터 사용 (menu-data.js에서 로드된 데이터)
                 }
 
