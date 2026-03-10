@@ -1321,20 +1321,20 @@
 
 ```
 1. 테스트 즐겨찾기 삭제
-   - favorites.html에서 TestMenu1 제거
+   - favorites.html에서 TestMenu{N} 제거
 
 2. 테스트 구매 이력 삭제
-   - history.html에서 TestHistory1 제거
+   - history.html에서 TestHistory{N} 제거
 
 3. 테스트 메뉴 삭제
-   - menu-admin.html에서 TestMenu1, TestMenu2, TestMenu3 삭제
+   - menu-admin.html에서 TestMenu{N} 삭제
 
 4. 테스트 카테고리 삭제
-   - menu-admin.html에서 TestCategory1 삭제
+   - menu-admin.html에서 TestCategory{N} 삭제
    (관련 메뉴가 있다면 함께 삭제됨 - 주의!)
 
 5. 테스트 사용자 이름 삭제
-   - admin.html에서 TestUser1 삭제
+   - admin.html에서 TestUser{N} 삭제
 
 6. 로그아웃
    - settings.html에서 로그아웃

@@ -3,7 +3,7 @@
  * TC-MAIN-001 ~ TC-MAIN-048
  *
  * 실행 방법:
- *   npx playwright test tests/main-page.spec.js
+ *   npx playwright test tests/plans/main-page.spec.js
  */
 
 const { test, expect } = require('@playwright/test');
@@ -20,6 +20,8 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const waitForDB = async () => await delay(800);
 // 일반 대기 (250ms - 300ms 미만)
 const shortDelay = async () => await delay(250);
+// 검색 디바운스 대기 (600ms)
+const searchDelay = async () => await delay(600);
 
 test.describe('메인 화면 테스트', () => {
   test.beforeEach(async ({ page }) => {
@@ -70,9 +72,9 @@ test.describe('메인 화면 테스트', () => {
 
   // TC-MAIN-003: 이름 미선택 시 메뉴 비활성화 확인
   test('TC-MAIN-003: 이름 미선택 시 메뉴 비활성화', async ({ page }) => {
-    const menuItems = page.locator('.menu-item-wrapper');
-    // 이름 미선택 시 메뉴가 비활성화되어 있거나 클릭 불가 상태
-    expect(await menuItems.count()).toBeGreaterThanOrEqual(0);
+    // 이름 미선택 시 메뉴에 disabled 클래스가 있거나 클릭 불가
+    const menuSection = page.locator('.menu-section');
+    await expect(menuSection).toBeVisible();
   });
 
   /**
@@ -110,10 +112,8 @@ test.describe('메인 화면 테스트', () => {
 
   // TC-MAIN-007: 직접 입력 후 메뉴 활성화
   test('TC-MAIN-007: 직접 입력 후 메뉴 활성화', async ({ page }) => {
-    await page.selectOption('#nameSelect', 'custom');
-    await shortDelay();
-    await page.fill('#customName', TEST_USER);
-    await shortDelay();
+    await selectUser(page, TEST_USER);
+    await waitForDB();
     // 메뉴가 로드되면 성공
     await expect(page.locator('#menuList')).toBeVisible();
   });
@@ -170,7 +170,7 @@ test.describe('메인 화면 테스트', () => {
     await selectUser(page, TEST_USER);
     await waitForDB();
     await page.fill('#searchInput', '아메리카노');
-    await shortDelay();
+    await searchDelay();
     const buttons = page.locator('#categoryButtons .category-btn');
     if (await buttons.count() > 1) {
       await buttons.nth(1).click();
@@ -179,7 +179,7 @@ test.describe('메인 화면 테스트', () => {
       const searchValue = await page.locator('#searchInput').inputValue();
       expect(searchValue).toBe('아메리카노');
       // 해당 카테고리 내 검색 결과 확인 (메뉴가 표시되거나 빈 목록)
-      const menuItems = page.locator('.menu-item-wrapper');
+      const menuItems = page.locator('.menu-item');
       expect(await menuItems.count()).toBeGreaterThanOrEqual(0);
     }
   });
@@ -193,8 +193,8 @@ test.describe('메인 화면 테스트', () => {
     await selectUser(page, TEST_USER);
     await waitForDB();
     await page.fill('#searchInput', '아메리카노');
-    await delay(600); // 디바운스 대기
-    const menuItems = page.locator('.menu-item-wrapper');
+    await searchDelay();
+    const menuItems = page.locator('.menu-item');
     expect(await menuItems.count()).toBeGreaterThanOrEqual(0);
   });
 
@@ -203,8 +203,8 @@ test.describe('메인 화면 테스트', () => {
     await selectUser(page, TEST_USER);
     await waitForDB();
     await page.fill('#searchInput', 'ㄹㄸ');
-    await delay(600);
-    const menuItems = page.locator('.menu-item-wrapper');
+    await searchDelay();
+    const menuItems = page.locator('.menu-item');
     expect(await menuItems.count()).toBeGreaterThanOrEqual(0);
   });
 
@@ -224,10 +224,10 @@ test.describe('메인 화면 테스트', () => {
   test('TC-MAIN-016: 검색 결과 없는 상태', async ({ page }) => {
     await selectUser(page, TEST_USER);
     await waitForDB();
-    await page.fill('#searchInput', '존재하지않는메뉴');
-    await delay(600);
-    // 검색 결과가 없으면 빈 목록 표시
-    const menuItems = page.locator('.menu-item-wrapper');
+    await page.fill('#searchInput', '존재하지않는메뉴12345');
+    await searchDelay();
+    // 검색 결과가 없으면 빈 목록 또는 "검색 결과가 없습니다" 메시지 표시
+    const menuItems = page.locator('.menu-item');
     expect(await menuItems.count()).toBe(0);
   });
 
@@ -243,7 +243,7 @@ test.describe('메인 화면 테스트', () => {
     expect(await checkbox.isChecked()).toBeFalsy();
     // 라디오 버튼이 생성될 때까지 대기
     await delay(500);
-    const radioButtons = page.locator('.menu-item-wrapper input[type="radio"]');
+    const radioButtons = page.locator('.menu-item input[type="radio"]');
     expect(await radioButtons.count()).toBeGreaterThan(0);
   });
 
@@ -251,7 +251,7 @@ test.describe('메인 화면 테스트', () => {
   test('TC-MAIN-018: 메뉴 선택 시 온도 버튼 표시', async ({ page }) => {
     await selectUser(page, TEST_USER);
     await waitForDB();
-    const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+    const radios = page.locator('.menu-item input[type="radio"]');
     if (await radios.count() > 0) {
       await radios.first().click();
       await shortDelay();
@@ -266,12 +266,12 @@ test.describe('메인 화면 테스트', () => {
   test('TC-MAIN-019: ICE 선택 및 주문', async ({ page }) => {
     await selectUser(page, TEST_USER);
     await waitForDB();
-    const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+    const radios = page.locator('.menu-item input[type="radio"]');
     if (await radios.count() > 0) {
       await radios.first().click();
       await shortDelay();
       // ICE 버튼이 있으면 클릭
-      const iceButton = page.locator('.temp-btn.temp-ice, .temp-main-btn.temp-ice-btn').first();
+      const iceButton = page.locator('.temp-btn.temp-ice').first();
       if (await iceButton.isVisible().catch(() => false)) {
         await iceButton.click();
         await shortDelay();
@@ -285,12 +285,12 @@ test.describe('메인 화면 테스트', () => {
   test('TC-MAIN-020: HOT 선택 및 주문', async ({ page }) => {
     await selectUser(page, TEST_USER);
     await waitForDB();
-    const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+    const radios = page.locator('.menu-item input[type="radio"]');
     if (await radios.count() > 0) {
       await radios.first().click();
       await shortDelay();
       // HOT 버튼이 있으면 클릭
-      const hotButton = page.locator('.temp-btn.temp-hot, .temp-main-btn.temp-hot-btn').first();
+      const hotButton = page.locator('.temp-btn.temp-hot').first();
       if (await hotButton.isVisible().catch(() => false)) {
         await hotButton.click();
         await shortDelay();
@@ -304,7 +304,7 @@ test.describe('메인 화면 테스트', () => {
   test('TC-MAIN-021: 메뉴 변경 시 선택 해제', async ({ page }) => {
     await selectUser(page, TEST_USER);
     await waitForDB();
-    const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+    const radios = page.locator('.menu-item input[type="radio"]');
     if (await radios.count() > 1) {
       await radios.first().click();
       await shortDelay();
@@ -329,13 +329,14 @@ test.describe('메인 화면 테스트', () => {
       if (text && text.includes('에이드')) {
         await buttons.nth(i).click();
         await waitForDB();
-        const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+        const radios = page.locator('.menu-item input[type="radio"]');
         if (await radios.count() > 0) {
           await radios.first().click();
           await shortDelay();
-          const iceBtn = page.locator('.temp-btn.temp-ice, .temp-main-btn.temp-ice-btn').first();
-          const hotBtn = page.locator('.temp-btn.temp-hot, .temp-main-btn.temp-hot-btn').first();
-          expect(await iceBtn.isVisible().catch(() => false) || await hotBtn.count() === 0).toBeTruthy();
+          // ICE Only면 .temp-main-btn.temp-ice-btn 또는 .temp-btn.temp-ice만 표시
+          const iceOnlyBtn = page.locator('.temp-main-btn.temp-ice-btn').first();
+          const iceBtn = page.locator('.temp-btn.temp-ice').first();
+          expect(await iceOnlyBtn.isVisible().catch(() => false) || await iceBtn.isVisible().catch(() => false)).toBeTruthy();
         }
         break;
       }
@@ -353,13 +354,13 @@ test.describe('메인 화면 테스트', () => {
       if (text && text.includes('스무디')) {
         await buttons.nth(i).click();
         await waitForDB();
-        const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+        const radios = page.locator('.menu-item input[type="radio"]');
         if (await radios.count() > 0) {
           await radios.first().click();
           await shortDelay();
-          const iceBtn = page.locator('.temp-btn.temp-ice, .temp-main-btn.temp-ice-btn').first();
-          const hotBtn = page.locator('.temp-btn.temp-hot, .temp-main-btn.temp-hot-btn').first();
-          expect(await iceBtn.isVisible().catch(() => false) || await hotBtn.count() === 0).toBeTruthy();
+          const iceOnlyBtn = page.locator('.temp-main-btn.temp-ice-btn').first();
+          const iceBtn = page.locator('.temp-btn.temp-ice').first();
+          expect(await iceOnlyBtn.isVisible().catch(() => false) || await iceBtn.isVisible().catch(() => false)).toBeTruthy();
         }
         break;
       }
@@ -378,14 +379,14 @@ test.describe('메인 화면 테스트', () => {
         await buttons.nth(i).click();
         await waitForDB();
         await page.fill('#searchInput', '아이스');
-        await delay(600);
-        const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+        await searchDelay();
+        const radios = page.locator('.menu-item input[type="radio"]');
         if (await radios.count() > 0) {
           await radios.first().click();
           await shortDelay();
-          const iceBtn = page.locator('.temp-btn.temp-ice, .temp-main-btn.temp-ice-btn').first();
-          const hotBtn = page.locator('.temp-btn.temp-hot, .temp-main-btn.temp-hot-btn').first();
-          expect(await iceBtn.isVisible().catch(() => false) || await hotBtn.count() === 0).toBeTruthy();
+          const iceOnlyBtn = page.locator('.temp-main-btn.temp-ice-btn').first();
+          const iceBtn = page.locator('.temp-btn.temp-ice').first();
+          expect(await iceOnlyBtn.isVisible().catch(() => false) || await iceBtn.isVisible().catch(() => false)).toBeTruthy();
         }
         break;
       }
@@ -397,14 +398,14 @@ test.describe('메인 화면 테스트', () => {
     await selectUser(page, TEST_USER);
     await waitForDB();
     await page.fill('#searchInput', '메가리카노');
-    await delay(600);
-    const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+    await searchDelay();
+    const radios = page.locator('.menu-item input[type="radio"]');
     if (await radios.count() > 0) {
       await radios.first().click();
       await shortDelay();
-      const iceBtn = page.locator('.temp-btn.temp-ice, .temp-main-btn.temp-ice-btn').first();
-      const hotBtn = page.locator('.temp-btn.temp-hot, .temp-main-btn.temp-hot-btn').first();
-      expect(await iceBtn.isVisible().catch(() => false) || await hotBtn.count() === 0).toBeTruthy();
+      const iceOnlyBtn = page.locator('.temp-main-btn.temp-ice-btn').first();
+      const iceBtn = page.locator('.temp-btn.temp-ice').first();
+      expect(await iceOnlyBtn.isVisible().catch(() => false) || await iceBtn.isVisible().catch(() => false)).toBeTruthy();
     }
   });
 
@@ -417,22 +418,22 @@ test.describe('메인 화면 테스트', () => {
     for (let i = 0; i < Math.min(count, 3); i++) {
       await buttons.nth(i).click();
       await waitForDB();
-      const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+      const radios = page.locator('.menu-item input[type="radio"]');
       for (let j = 0; j < Math.min(await radios.count(), 3); j++) {
         await radios.nth(j).click();
         await shortDelay();
-        const iceBtn = page.locator('.temp-btn.temp-ice, .temp-main-btn.temp-ice-btn').first();
-        const hotBtn = page.locator('.temp-btn.temp-hot, .temp-main-btn.temp-hot-btn').first();
-        const hasHot = await hotBtn.isVisible().catch(() => false);
-        const hasIce = await iceBtn.isVisible().catch(() => false);
-        if (hasHot && !hasIce) {
-          // HOT Only 메뉴 발견
+        const hotOnlyBtn = page.locator('.temp-main-btn.temp-hot-btn').first();
+        const hotBtn = page.locator('.temp-btn.temp-hot').first();
+        const hasHotOnly = await hotOnlyBtn.isVisible().catch(() => false);
+        const hasHotBtn = await hotBtn.isVisible().catch(() => false);
+        if (hasHotOnly || hasHotBtn) {
+          // HOT Only 또는 HOT 선택 가능 메뉴 발견
           expect(true).toBeTruthy();
           return;
         }
       }
     }
-    // HOT Only 메뉴가 없을 수도 있음
+    // HOT 메뉴가 없을 수도 있음
     expect(true).toBeTruthy();
   });
 
@@ -445,15 +446,13 @@ test.describe('메인 화면 테스트', () => {
     for (let i = 0; i < Math.min(count, 3); i++) {
       await buttons.nth(i).click();
       await waitForDB();
-      const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+      const radios = page.locator('.menu-item input[type="radio"]');
       if (await radios.count() > 0) {
         await radios.first().click();
         await shortDelay();
-        const iceBtn = page.locator('.temp-btn.temp-ice, .temp-main-btn.temp-ice-btn').first();
-        const hotBtn = page.locator('.temp-btn.temp-hot, .temp-main-btn.temp-hot-btn').first();
-        const hasHot = await hotBtn.isVisible().catch(() => false);
-        const hasIce = await iceBtn.isVisible().catch(() => false);
-        expect(hasHot || hasIce).toBeTruthy();
+        // 온도 버튼 표시 확인
+        const tempButtons = page.locator('.temp-buttons').first();
+        expect(await tempButtons.isVisible().catch(() => false)).toBeTruthy();
         break;
       }
     }
@@ -467,7 +466,7 @@ test.describe('메인 화면 테스트', () => {
     await waitForDB();
     await selectUser(page, TEST_USER);
     await waitForDB();
-    const radios = page.locator('.menu-item-wrapper input[type="radio"]');
+    const radios = page.locator('.menu-item input[type="radio"]');
     if (await radios.count() > 0) {
       await radios.first().click();
       await shortDelay();
@@ -490,7 +489,7 @@ test.describe('메인 화면 테스트', () => {
     expect(await checkbox.isChecked()).toBeTruthy();
     // 체크박스가 생성될 때까지 대기
     await delay(500);
-    const checkboxes = page.locator('.menu-item-wrapper input[type="checkbox"]');
+    const checkboxes = page.locator('.menu-item input[type="checkbox"]');
     expect(await checkboxes.count()).toBeGreaterThan(0);
   });
 
@@ -501,7 +500,7 @@ test.describe('메인 화면 테스트', () => {
     await page.click('#multiOrderMode');
     await shortDelay();
     await delay(500);
-    const checkboxes = page.locator('.menu-item-wrapper input[type="checkbox"]');
+    const checkboxes = page.locator('.menu-item input[type="checkbox"]');
     expect(await checkboxes.count()).toBeGreaterThan(0);
   });
 
@@ -512,13 +511,12 @@ test.describe('메인 화면 테스트', () => {
     await page.click('#multiOrderMode');
     await shortDelay();
     await delay(500);
-    // 첫 번째 메뉴의 + 버튼 클릭 (실제 구조에 맞게 수정 필요)
-    const firstWrapper = page.locator('.menu-item-wrapper').first();
+    // 첫 번째 메뉴의 + 버튼 클릭 (temp-main-btn이 추가 버튼 역할)
+    const firstWrapper = page.locator('.menu-item').first();
     if (await firstWrapper.isVisible().catch(() => false)) {
-      // temp-buttons의 + 버튼 클릭
-      const plusBtn = firstWrapper.locator('.quantity-btn.plus, .temp-btn').first();
-      if (await plusBtn.isVisible().catch(() => false)) {
-        await plusBtn.click();
+      const addBtn = firstWrapper.locator('.temp-main-btn').first();
+      if (await addBtn.isVisible().catch(() => false)) {
+        await addBtn.click();
         await shortDelay();
       }
     }
@@ -531,9 +529,9 @@ test.describe('메인 화면 테스트', () => {
     await page.click('#multiOrderMode');
     await shortDelay();
     await delay(500);
-    const firstWrapper = page.locator('.menu-item-wrapper').first();
+    const firstWrapper = page.locator('.menu-item').first();
     if (await firstWrapper.isVisible().catch(() => false)) {
-      const minusBtn = firstWrapper.locator('.quantity-btn.minus').first();
+      const minusBtn = firstWrapper.locator('.temp-minus-btn').first();
       if (await minusBtn.isVisible().catch(() => false)) {
         await minusBtn.click();
         await shortDelay();
@@ -549,7 +547,7 @@ test.describe('메인 화면 테스트', () => {
     await shortDelay();
     await delay(500);
     // 체크박스 해제 테스트
-    const checkboxes = page.locator('.menu-item-wrapper input[type="checkbox"]');
+    const checkboxes = page.locator('.menu-item input[type="checkbox"]');
     if (await checkboxes.count() > 0) {
       await checkboxes.first().click();
       await shortDelay();
@@ -565,7 +563,7 @@ test.describe('메인 화면 테스트', () => {
     await page.click('#multiOrderMode');
     await shortDelay();
     await delay(500);
-    const firstWrapper = page.locator('.menu-item-wrapper').first();
+    const firstWrapper = page.locator('.menu-item').first();
     if (await firstWrapper.isVisible().catch(() => false)) {
       const hotBtn = firstWrapper.locator('.temp-btn.temp-hot').first();
       if (await hotBtn.isVisible().catch(() => false)) {
@@ -641,7 +639,7 @@ test.describe('메인 화면 테스트', () => {
     await page.click('#viewCartBtn');
     await shortDelay();
     // 삭제 버튼 확인만 (실제 삭제는 테스트 데이터가 필요)
-    const deleteButtons = page.locator('#cartList .delete-btn, #cartList .remove-btn');
+    const deleteButtons = page.locator('#cartList .delete-btn');
     expect(await deleteButtons.count()).toBeGreaterThanOrEqual(0);
   });
 
@@ -678,7 +676,8 @@ test.describe('메인 화면 테스트', () => {
   test('TC-MAIN-041: 즐겨찾기 메뉴 상단 표시', async ({ page }) => {
     await selectUser(page, TEST_USER);
     await waitForDB();
-    const favoriteItems = page.locator('.favorite-item-wrapper, .user-favorite');
+    // 즐겨찾기 섹션 확인 (있을 수도 없을 수도 있음)
+    const favoriteItems = page.locator('.menu-item.is-favorite');
     // 즐겨찾기가 있거나 없을 수 있음
     expect(await favoriteItems.count()).toBeGreaterThanOrEqual(0);
   });
@@ -689,7 +688,8 @@ test.describe('메인 화면 테스트', () => {
 
   // TC-MAIN-042: 구매 이력 팝업 표시
   test('TC-MAIN-042: 구매 이력 팝업', async ({ page }) => {
-    await page.click('a[onclick="openHistoryPopup()"], footer a:has-text("구매 이력")');
+    // footer의 구매 이력 링크 클릭
+    await page.click('footer a[onclick*="openHistoryPopup"]');
     await shortDelay();
     const modal = page.locator('#historyPopupModal');
     await expect(modal).toBeVisible();
@@ -697,11 +697,14 @@ test.describe('메인 화면 테스트', () => {
 
   // TC-MAIN-043: 구매 이력 외부 클릭 시 닫기
   test('TC-MAIN-043: 구매 이력 외부 클릭 닫기', async ({ page }) => {
-    await page.click('a[onclick="openHistoryPopup()"], footer a:has-text("구매 이력")');
+    await page.click('footer a[onclick*="openHistoryPopup"]');
     await shortDelay();
+    // ESC 키로 닫기 시도
     await page.keyboard.press('Escape');
     await shortDelay();
-    // ESC로 닫히거나 닫히지 않을 수 있음
+    // ESC로 닫히거나 닫히지 않을 수 있음 - 팝업 외부 클릭으로 대체
+    await page.click('#historyPopupModal', { position: { x: 10, y: 10 } });
+    await shortDelay();
     expect(true).toBeTruthy();
   });
 
@@ -719,7 +722,7 @@ test.describe('메인 화면 테스트', () => {
     expect(true).toBeTruthy();
   });
 
-  // TC-MAIN-045: 네트워크 연결 끊김 시 fallback
+  // TC-MAIN-045: 오프라인 fallback
   test('TC-MAIN-045: 오프라인 fallback', async ({ page }) => {
     await page.goto('http://localhost:8000');
     await waitForDB();

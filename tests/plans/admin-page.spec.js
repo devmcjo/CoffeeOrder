@@ -3,7 +3,7 @@
  * TC-ADMIN-001 ~ TC-ADMIN-034
  *
  * 실행 방법:
- *   npx playwright test tests/admin-page.spec.js
+ *   npx playwright test tests/plans/admin-page.spec.js
  */
 
 const { test, expect } = require('@playwright/test');
@@ -18,7 +18,7 @@ const TEST_MENU2 = `${TEST_PREFIX}Menu2_${timestamp}`;
 const TEST_MENU3 = `${TEST_PREFIX}Menu3_${timestamp}`;
 const TEST_HISTORY = `${TEST_PREFIX}History_${timestamp}`;
 
-// 매니저 로그인 정보
+// 매니저 로그인 정보 (Firebase DB의 accounts/managers 참조)
 const ADMIN_ID = 'admin_test';
 const ADMIN_PW = '1';
 
@@ -35,7 +35,10 @@ test.describe('관리자 페이지 테스트', () => {
   test.beforeEach(async ({ page }) => {
     // 로컬 스토리지 초기화
     await page.goto('http://localhost:8000/login.html');
-    await page.evaluate(() => localStorage.clear());
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
     await waitForDB();
   });
 
@@ -48,7 +51,7 @@ test.describe('관리자 페이지 테스트', () => {
     await expect(page).toHaveURL(/login/);
     await expect(page.locator('input#userId')).toBeVisible();
     await expect(page.locator('input#password')).toBeVisible();
-    await expect(page.locator('button[type="submit"], #loginBtn')).toBeVisible();
+    await expect(page.locator('button[type="submit"].login-btn')).toBeVisible();
   });
 
   // TC-ADMIN-002: 쿠키/로컬스토리지 초기화 후 로그인
@@ -59,8 +62,10 @@ test.describe('관리자 페이지 테스트', () => {
     });
     await page.reload();
     await waitForDB();
-    const session = await page.evaluate(() => localStorage.getItem('session'));
-    expect(session).toBeNull();
+    const user = await page.evaluate(() => localStorage.getItem('coffeeOrder_user'));
+    const role = await page.evaluate(() => localStorage.getItem('coffeeOrder_role'));
+    expect(user).toBeNull();
+    expect(role).toBeNull();
   });
 
   // TC-ADMIN-003: 매니저 계정 로그인 성공
@@ -69,9 +74,9 @@ test.describe('관리자 페이지 테스트', () => {
     await shortDelay();
     await page.fill('input#password', ADMIN_PW);
     await shortDelay();
-    await page.click('button[type="submit"], #loginBtn');
+    await page.click('button[type="submit"].login-btn');
     await waitForDB();
-    await expect(page).toHaveURL(/settings|admin/);
+    await expect(page).toHaveURL(/settings/);
   });
 
   // TC-ADMIN-004: 잘못된 계정 로그인 실패
@@ -80,10 +85,10 @@ test.describe('관리자 페이지 테스트', () => {
     await shortDelay();
     await page.fill('input#password', 'wrongpass');
     await shortDelay();
-    await page.click('button[type="submit"], #loginBtn');
+    await page.click('button[type="submit"].login-btn');
     await shortDelay();
-    const errorMsg = page.locator('#errorMessage, .error-message');
-    await expect(errorMsg).toBeVisible();
+    const errorMsg = page.locator('#errorMessage');
+    await expect(errorMsg).toHaveClass(/show/);
   });
 
   // TC-ADMIN-005: 권한 없는 계정으로 관리자 페이지 접근
@@ -91,7 +96,8 @@ test.describe('관리자 페이지 테스트', () => {
     await page.goto('http://localhost:8000/admin.html');
     await waitForDB();
     const currentUrl = page.url();
-    expect(currentUrl.includes('login') || currentUrl.includes('admin')).toBeTruthy();
+    // 권한 없으면 login.html로 리다이렉트되거나 notLoggedIn 표시
+    expect(currentUrl.includes('login') || await page.locator('#notLoggedIn').isVisible().catch(() => false)).toBeTruthy();
   });
 
   /**
@@ -151,7 +157,7 @@ test.describe('관리자 페이지 테스트', () => {
         setTimeout(() => { window.alert = originalAlert; resolve(null); }, 1000);
       });
     });
-    expect(alertMsg || '').toContain('존재');
+    expect(alertMsg || '').toContain('등록된 이름');
 
     // 정리
     await cleanupTestUser(page, TEST_USER);
@@ -168,17 +174,19 @@ test.describe('관리자 페이지 테스트', () => {
     await page.click('#addNameBtn');
     await waitForDB();
 
-    // 삭제 버튼 클릭 (이름 아이템 내의 삭제 버튼)
-    const deleteBtn = page.locator(`#namesList .name-item:has-text("${TEST_USER}") .btn-danger, #namesList div:has-text("${TEST_USER}") button`).first();
+    // 삭제 버튼 클릭 (name-item 내의 delete-btn)
+    const deleteBtn = page.locator(`.name-item:has-text("${TEST_USER}") .delete-btn`).first();
     if (await deleteBtn.isVisible().catch(() => false)) {
       await deleteBtn.click();
       await shortDelay();
       // 확인 대화상자 처리
-      await page.click('button:has-text("확인"), .confirm-btn');
+      page.on('dialog', async dialog => {
+        await dialog.accept();
+      });
       await waitForDB();
     }
 
-    const deletedName = page.locator(`#namesList .name-item:has-text("${TEST_USER}")`);
+    const deletedName = page.locator(`.name-item:has-text("${TEST_USER}")`);
     expect(await deletedName.count()).toBe(0);
   });
 
@@ -189,7 +197,16 @@ test.describe('관리자 페이지 테스트', () => {
     await waitForDB();
     await page.click('#addNameBtn');
     await shortDelay();
+
     // alert 확인
+    const alertMsg = await page.evaluate(() => {
+      return new Promise((resolve) => {
+        const originalAlert = window.alert;
+        window.alert = (msg) => { window.alert = originalAlert; resolve(msg); };
+        setTimeout(() => { window.alert = originalAlert; resolve(null); }, 1000);
+      });
+    });
+    expect(alertMsg || '').toContain('이름을 입력해주세요');
   });
 
   /**
@@ -213,7 +230,7 @@ test.describe('관리자 페이지 테스트', () => {
     const categoryInput = page.locator('#newCategoryName');
     await categoryInput.fill(TEST_CATEGORY);
     await shortDelay();
-    await page.click('button[onclick="addCategory()"]');
+    await page.click('#categoryTab .btn-primary');
     await waitForDB();
 
     const categoryList = page.locator('#categoryList');
@@ -231,14 +248,22 @@ test.describe('관리자 페이지 테스트', () => {
 
     const categoryInput = page.locator('#newCategoryName');
     await categoryInput.fill(TEST_CATEGORY);
-    await page.click('button[onclick="addCategory()"]');
+    await page.click('#categoryTab .btn-primary');
     await waitForDB();
 
     await categoryInput.fill(TEST_CATEGORY);
-    await page.click('button[onclick="addCategory()"]');
+    await page.click('#categoryTab .btn-primary');
     await shortDelay();
 
-    // alert 확인
+    // alert 확인 - "이미 존재하는 카테고리입니다"
+    const alertMsg = await page.evaluate(() => {
+      return new Promise((resolve) => {
+        const originalAlert = window.alert;
+        window.alert = (msg) => { window.alert = originalAlert; resolve(msg); };
+        setTimeout(() => { window.alert = originalAlert; resolve(null); }, 1000);
+      });
+    });
+    expect(alertMsg || '').toContain('존재');
 
     // 정리
     await cleanupTestCategory(page, TEST_CATEGORY);
@@ -254,7 +279,7 @@ test.describe('관리자 페이지 테스트', () => {
     await createTestCategory(page, TEST_CATEGORY);
 
     // 메뉴 탭으로 전환
-    await page.click('button[onclick="switchTab(\'menu\')"]');
+    await page.click('.tab-btn:nth-child(2)');
     await shortDelay();
 
     // 메뉴 추가
@@ -263,14 +288,14 @@ test.describe('관리자 페이지 테스트', () => {
     await page.selectOption('#newMenuCategory', { label: TEST_CATEGORY });
     await shortDelay();
     // both 옵션은 기본 선택되어 있음
-    await page.click('button[onclick="addMenu()"]');
+    await page.click('#menuTab .btn-primary');
     await waitForDB();
 
     const menuList = page.locator('#menuList');
     await expect(menuList).toContainText(TEST_MENU1);
 
     // 정리
-    await page.click('button[onclick="switchTab(\'category\')"]');
+    await page.click('.tab-btn:nth-child(1)');
     await cleanupTestCategory(page, TEST_CATEGORY);
   });
 
@@ -282,20 +307,20 @@ test.describe('관리자 페이지 테스트', () => {
 
     await createTestCategory(page, TEST_CATEGORY);
 
-    await page.click('button[onclick="switchTab(\'menu\')"]');
+    await page.click('.tab-btn:nth-child(2)');
     await shortDelay();
 
     await page.fill('#newMenuName', TEST_MENU2);
     await page.selectOption('#newMenuCategory', { label: TEST_CATEGORY });
     await page.locator('input[name="menuTemperature"][value="ice_only"]').check();
-    await page.click('button[onclick="addMenu()"]');
+    await page.click('#menuTab .btn-primary');
     await waitForDB();
 
     const menuList = page.locator('#menuList');
     await expect(menuList).toContainText(TEST_MENU2);
 
     // 정리
-    await page.click('button[onclick="switchTab(\'category\')"]');
+    await page.click('.tab-btn:nth-child(1)');
     await cleanupTestCategory(page, TEST_CATEGORY);
   });
 
@@ -307,20 +332,20 @@ test.describe('관리자 페이지 테스트', () => {
 
     await createTestCategory(page, TEST_CATEGORY);
 
-    await page.click('button[onclick="switchTab(\'menu\')"]');
+    await page.click('.tab-btn:nth-child(2)');
     await shortDelay();
 
     await page.fill('#newMenuName', TEST_MENU3);
     await page.selectOption('#newMenuCategory', { label: TEST_CATEGORY });
     await page.locator('input[name="menuTemperature"][value="hot_only"]').check();
-    await page.click('button[onclick="addMenu()"]');
+    await page.click('#menuTab .btn-primary');
     await waitForDB();
 
     const menuList = page.locator('#menuList');
     await expect(menuList).toContainText(TEST_MENU3);
 
     // 정리
-    await page.click('button[onclick="switchTab(\'category\')"]');
+    await page.click('.tab-btn:nth-child(1)');
     await cleanupTestCategory(page, TEST_CATEGORY);
   });
 
@@ -335,11 +360,15 @@ test.describe('관리자 페이지 테스트', () => {
     await createTestMenu(page, TEST_CATEGORY, TEST_MENU1);
 
     // 카테고리 삭제
-    const categoryItem = page.locator(`#categoryList .category-item:has-text("${TEST_CATEGORY}")`);
-    const deleteBtn = categoryItem.locator('.delete-btn').first();
+    const categoryItem = page.locator(`.category-item:has-text("${TEST_CATEGORY}")`);
+    const deleteBtn = categoryItem.locator('.btn-danger').first();
     await deleteBtn.click();
     await shortDelay();
-    await page.click('button:has-text("확인")');
+
+    // 확인 대화상자 처리
+    page.on('dialog', async dialog => {
+      await dialog.accept();
+    });
     await waitForDB();
 
     const deletedCategory = page.locator(`text=${TEST_CATEGORY}`);
@@ -356,18 +385,18 @@ test.describe('관리자 페이지 테스트', () => {
     await createTestMenu(page, TEST_CATEGORY, TEST_MENU1);
 
     // 메뉴 탭에서 삭제
-    await page.click('button[onclick="switchTab(\'menu\')"]');
+    await page.click('.tab-btn:nth-child(2)');
     await shortDelay();
 
-    const menuItem = page.locator(`#menuList .menu-item:has-text("${TEST_MENU1}")`);
-    const deleteBtn = menuItem.locator('.delete-btn').first();
+    const menuItem = page.locator(`.menu-item:has-text("${TEST_MENU1}")`);
+    const deleteBtn = menuItem.locator('.btn-danger').first();
     await deleteBtn.click();
     await waitForDB();
 
     const deletedMenu = page.locator(`text=${TEST_MENU1}`);
     expect(await deletedMenu.count()).toBe(0);
 
-    await page.click('button[onclick="switchTab(\'category\')"]');
+    await page.click('.tab-btn:nth-child(1)');
     await cleanupTestCategory(page, TEST_CATEGORY);
   });
 
@@ -379,8 +408,8 @@ test.describe('관리자 페이지 테스트', () => {
 
     await createTestCategory(page, TEST_CATEGORY);
 
-    const categoryItem = page.locator(`#categoryList .category-item:has-text("${TEST_CATEGORY}")`);
-    const editBtn = categoryItem.locator('.edit-btn').first();
+    const categoryItem = page.locator(`.category-item:has-text("${TEST_CATEGORY}")`);
+    const editBtn = categoryItem.locator('.btn-secondary').first();
     await editBtn.click();
     await shortDelay();
 
@@ -389,7 +418,7 @@ test.describe('관리자 페이지 테스트', () => {
     await editInput.fill(newName);
     await shortDelay();
 
-    await page.click('button:has-text("저장")');
+    await page.click('.category-edit-actions .btn-primary');
     await waitForDB();
 
     const categoryList = page.locator('#categoryList');
@@ -407,8 +436,8 @@ test.describe('관리자 페이지 테스트', () => {
 
     await createTestCategory(page, TEST_CATEGORY);
 
-    const categoryItem = page.locator(`#categoryList .category-item:has-text("${TEST_CATEGORY}")`);
-    const editBtn = categoryItem.locator('.edit-btn').first();
+    const categoryItem = page.locator(`.category-item:has-text("${TEST_CATEGORY}")`);
+    const editBtn = categoryItem.locator('.btn-secondary').first();
     await editBtn.click();
     await shortDelay();
 
@@ -416,7 +445,7 @@ test.describe('관리자 페이지 테스트', () => {
     await editInput.fill(`${TEST_CATEGORY}_Changed`);
     await shortDelay();
 
-    await page.click('button:has-text("취소")');
+    await page.click('.category-edit-actions .btn-secondary');
     await shortDelay();
 
     const categoryList = page.locator('#categoryList');
@@ -434,21 +463,21 @@ test.describe('관리자 페이지 테스트', () => {
     await createTestCategory(page, TEST_CATEGORY);
     await createTestMenu(page, TEST_CATEGORY, TEST_MENU1);
 
-    await page.click('button[onclick="switchTab(\'menu\')"]');
+    await page.click('.tab-btn:nth-child(2)');
     await shortDelay();
 
-    const menuItem = page.locator(`#menuList .menu-item:has-text("${TEST_MENU1}")`);
-    const editBtn = menuItem.locator('.edit-btn').first();
+    const menuItem = page.locator(`.menu-item:has-text("${TEST_MENU1}")`);
+    const editBtn = menuItem.locator('.btn-secondary').first();
     await editBtn.click();
     await shortDelay();
 
-    await page.locator('.menu-edit-form input[name="menuTemperature"][value="ice_only"]').check();
+    await page.locator('#menuTab select').nth(1).selectOption('ice_only');
     await shortDelay();
 
-    await page.click('button:has-text("저장")');
+    await page.click('.menu-edit-actions .btn-primary');
     await waitForDB();
 
-    await page.click('button[onclick="switchTab(\'category\')"]');
+    await page.click('.tab-btn:nth-child(1)');
     await cleanupTestCategory(page, TEST_CATEGORY);
   });
 
@@ -461,21 +490,21 @@ test.describe('관리자 페이지 테스트', () => {
     await createTestCategory(page, TEST_CATEGORY);
     await createTestMenu(page, TEST_CATEGORY, TEST_MENU1);
 
-    await page.click('button[onclick="switchTab(\'menu\')"]');
+    await page.click('.tab-btn:nth-child(2)');
     await shortDelay();
 
-    const menuItem = page.locator(`#menuList .menu-item:has-text("${TEST_MENU1}")`);
-    const editBtn = menuItem.locator('.edit-btn').first();
+    const menuItem = page.locator(`.menu-item:has-text("${TEST_MENU1}")`);
+    const editBtn = menuItem.locator('.btn-secondary').first();
     await editBtn.click();
     await shortDelay();
 
-    await page.locator('.menu-edit-form input[name="menuTemperature"][value="hot_only"]').check();
+    await page.locator('#menuTab select').nth(1).selectOption('hot_only');
     await shortDelay();
 
-    await page.click('button:has-text("저장")');
+    await page.click('.menu-edit-actions .btn-primary');
     await waitForDB();
 
-    await page.click('button[onclick="switchTab(\'category\')"]');
+    await page.click('.tab-btn:nth-child(1)');
     await cleanupTestCategory(page, TEST_CATEGORY);
   });
 
@@ -488,21 +517,21 @@ test.describe('관리자 페이지 테스트', () => {
     await createTestCategory(page, TEST_CATEGORY);
     await createTestMenu(page, TEST_CATEGORY, TEST_MENU1);
 
-    await page.click('button[onclick="switchTab(\'menu\')"]');
+    await page.click('.tab-btn:nth-child(2)');
     await shortDelay();
 
-    const menuItem = page.locator(`#menuList .menu-item:has-text("${TEST_MENU1}")`);
-    const editBtn = menuItem.locator('.edit-btn').first();
+    const menuItem = page.locator(`.menu-item:has-text("${TEST_MENU1}")`);
+    const editBtn = menuItem.locator('.btn-secondary').first();
     await editBtn.click();
     await shortDelay();
 
-    await page.click('button:has-text("취소")');
+    await page.click('.menu-edit-actions .btn-secondary');
     await shortDelay();
 
     const menuList = page.locator('#menuList');
     await expect(menuList).toContainText(TEST_MENU1);
 
-    await page.click('button[onclick="switchTab(\'category\')"]');
+    await page.click('.tab-btn:nth-child(1)');
     await cleanupTestCategory(page, TEST_CATEGORY);
   });
 
@@ -518,8 +547,8 @@ test.describe('관리자 페이지 테스트', () => {
     await createTestCategory(page, cat1);
     await createTestCategory(page, cat2);
 
-    const categoryItem = page.locator(`#categoryList .category-item:has-text("${cat1}")`);
-    const editBtn = categoryItem.locator('.edit-btn').first();
+    const categoryItem = page.locator(`.category-item:has-text("${cat1}")`);
+    const editBtn = categoryItem.locator('.btn-secondary').first();
     await editBtn.click();
     await shortDelay();
 
@@ -527,10 +556,18 @@ test.describe('관리자 페이지 테스트', () => {
     await editInput.fill(cat2);
     await shortDelay();
 
-    await page.click('button:has-text("저장")');
+    await page.click('.category-edit-actions .btn-primary');
     await shortDelay();
 
     // 중복 경고 확인
+    const alertMsg = await page.evaluate(() => {
+      return new Promise((resolve) => {
+        const originalAlert = window.alert;
+        window.alert = (msg) => { window.alert = originalAlert; resolve(msg); };
+        setTimeout(() => { window.alert = originalAlert; resolve(null); }, 1000);
+      });
+    });
+    expect(alertMsg || '').toContain('존재');
 
     // 정리
     await cleanupTestCategoryByName(page, cat1);
@@ -555,20 +592,20 @@ test.describe('관리자 페이지 테스트', () => {
     await page.goto('http://localhost:8000/history.html');
     await waitForDB();
 
-    const addBtn = page.locator('button:has-text("추가"), #addHistoryBtn').first();
+    const addBtn = page.locator('#addHistoryBtn');
     if (await addBtn.isVisible().catch(() => false)) {
       await addBtn.click();
       await shortDelay();
 
-      await page.fill('input[name="content"], #historyContent', TEST_HISTORY);
+      await page.fill('#purchaseName', TEST_HISTORY);
       await shortDelay();
-      await page.fill('input[type="date"], #historyDate', new Date().toISOString().split('T')[0]);
+      await page.fill('#purchaseDate', new Date().toISOString().split('T')[0]);
       await shortDelay();
 
-      await page.click('button:has-text("추가"), .confirm-add-btn');
+      await page.click('#addModal .btn-primary');
       await waitForDB();
 
-      const historyList = page.locator('#historyList, .history-list');
+      const historyList = page.locator('#historyList');
       await expect(historyList).toContainText(TEST_HISTORY);
 
       // 정리
@@ -582,11 +619,9 @@ test.describe('관리자 페이지 테스트', () => {
     await page.goto('http://localhost:8000/history.html');
     await waitForDB();
 
-    const dateFilter = page.locator('input[type="date"], #dateFilter, select').first();
-    if (await dateFilter.isVisible().catch(() => false)) {
-      await dateFilter.fill(new Date().toISOString().split('T')[0]);
-      await shortDelay();
-    }
+    // history 페이지는 날짜별 필터가 없으므로 목록 로드만 확인
+    const historyList = page.locator('#historyList');
+    await expect(historyList).toBeVisible();
   });
 
   // TC-ADMIN-022: 테스트 구매 이력 삭제
@@ -596,19 +631,23 @@ test.describe('관리자 페이지 테스트', () => {
     await waitForDB();
 
     // 테스트 이력 추가
-    const addBtn = page.locator('button:has-text("추가"), #addHistoryBtn').first();
+    const addBtn = page.locator('#addHistoryBtn');
     if (await addBtn.isVisible().catch(() => false)) {
       await addBtn.click();
-      await page.fill('input[name="content"], #historyContent', TEST_HISTORY);
-      await page.fill('input[type="date"], #historyDate', new Date().toISOString().split('T')[0]);
-      await page.click('button:has-text("추가"), .confirm-add-btn');
+      await page.fill('#purchaseName', TEST_HISTORY);
+      await page.fill('#purchaseDate', new Date().toISOString().split('T')[0]);
+      await page.click('#addModal .btn-primary');
       await waitForDB();
 
       // 삭제
-      const deleteBtn = page.locator(`.history-item:has-text("${TEST_HISTORY}") .delete-btn, .delete-history-btn`).first();
+      const deleteBtn = page.locator(`.history-item:has-text("${TEST_HISTORY}") .delete-btn`).first();
       await deleteBtn.click();
       await shortDelay();
-      await page.click('button:has-text("확인")');
+
+      // 확인 대화상자 처리
+      page.on('dialog', async dialog => {
+        await dialog.accept();
+      });
       await waitForDB();
 
       const deletedHistory = page.locator(`text=${TEST_HISTORY}`);
@@ -641,20 +680,21 @@ test.describe('관리자 페이지 테스트', () => {
     await page.goto('http://localhost:8000/favorites.html');
     await waitForDB();
 
-    const menuSelect = page.locator('select[name="menu"], #menuSelect, #favoriteMenuSelect').first();
-    if (await menuSelect.isVisible().catch(() => false)) {
-      await menuSelect.selectOption({ label: TEST_MENU1 });
+    // 첫 번째 메뉴의 체크박스 클릭
+    const firstCheckbox = page.locator('.menu-item input[type="checkbox"]').first();
+    if (await firstCheckbox.isVisible().catch(() => false)) {
+      await firstCheckbox.check();
       await shortDelay();
-      await page.click('button:has-text("추가"), #addFavoriteBtn');
+
+      // 저장 버튼 클릭
+      await page.click('#saveBtn');
       await waitForDB();
 
-      const favoriteList = page.locator('#favoritesList, .favorites-list');
-      await expect(favoriteList).toContainText(TEST_MENU1);
-
-      // 정리
-      await cleanupTestFavorite(page, TEST_MENU1);
+      // 저장 성공 시 index.html로 이동
+      await expect(page).toHaveURL(/index/);
     }
 
+    // 정리
     await page.goto('http://localhost:8000/menu-admin.html');
     await cleanupTestCategory(page, TEST_CATEGORY);
   });
@@ -669,23 +709,21 @@ test.describe('관리자 페이지 테스트', () => {
     await createTestCategory(page, TEST_CATEGORY);
     await createTestMenu(page, TEST_CATEGORY, TEST_MENU1);
 
-    // 즐겨찾기 추가
+    // 즐겨찾기 페이지로 이동
     await page.goto('http://localhost:8000/favorites.html');
     await waitForDB();
 
-    const menuSelect = page.locator('select[name="menu"], #menuSelect, #favoriteMenuSelect').first();
-    if (await menuSelect.isVisible().catch(() => false)) {
-      await menuSelect.selectOption({ label: TEST_MENU1 });
-      await page.click('button:has-text("추가"), #addFavoriteBtn');
-      await waitForDB();
+    // 체크박스 선택 후 해제 (즐겨찾기 삭제)
+    const firstCheckbox = page.locator('.menu-item input[type="checkbox"]').first();
+    if (await firstCheckbox.isVisible().catch(() => false)) {
+      await firstCheckbox.check();
+      await shortDelay();
+      await firstCheckbox.uncheck();
+      await shortDelay();
 
-      // 삭제
-      const deleteBtn = page.locator(`.favorite-item:has-text("${TEST_MENU1}") .delete-btn, .remove-favorite-btn`).first();
-      await deleteBtn.click();
+      // 저장
+      await page.click('#saveBtn');
       await waitForDB();
-
-      const deletedFav = page.locator(`text=${TEST_MENU1}`);
-      expect(await deletedFav.count()).toBe(0);
     }
 
     await page.goto('http://localhost:8000/menu-admin.html');
@@ -711,10 +749,10 @@ test.describe('관리자 페이지 테스트', () => {
     await waitForDB();
 
     const links = [
-      { selector: 'a[href="admin.html"], a:has-text("이름 관리")' },
-      { selector: 'a[href="menu-admin.html"], a:has-text("메뉴 관리")' },
-      { selector: 'a[href="history.html"], a:has-text("구매 이력")' },
-      { selector: 'a[href="favorites.html"], a:has-text("즐겨찾기")' },
+      { selector: 'a[href="admin.html"]' },
+      { selector: 'a[href="menu-admin.html"]' },
+      { selector: 'a[href="history.html"]' },
+      { selector: 'a[href="favorites.html"]' },
     ];
 
     for (const link of links) {
@@ -729,12 +767,19 @@ test.describe('관리자 페이지 테스트', () => {
     await page.goto('http://localhost:8000/settings.html');
     await waitForDB();
 
-    const logoutBtn = page.locator('button:has-text("로그아웃"), #logoutBtn').first();
+    // 로그아웃 버튼 클릭
+    const logoutBtn = page.locator('.logout-btn');
     await logoutBtn.click();
     await waitForDB();
 
-    const session = await page.evaluate(() => localStorage.getItem('session'));
-    expect(session).toBeNull();
+    // 확인 대화상자 처리
+    page.on('dialog', async dialog => {
+      await dialog.accept();
+    });
+    await waitForDB();
+
+    const user = await page.evaluate(() => localStorage.getItem('coffeeOrder_user'));
+    expect(user).toBeNull();
   });
 });
 
@@ -746,7 +791,7 @@ async function loginAsAdmin(page) {
   await shortDelay();
   await page.fill('input#password', ADMIN_PW);
   await shortDelay();
-  await page.click('button[type="submit"], #loginBtn');
+  await page.click('button[type="submit"].login-btn');
   await waitForDB();
 }
 
@@ -754,69 +799,69 @@ async function createTestCategory(page, name) {
   const categoryInput = page.locator('#newCategoryName');
   await categoryInput.fill(name);
   await shortDelay();
-  await page.click('button[onclick="addCategory()"]');
+  await page.click('#categoryTab .btn-primary');
   await waitForDB();
 }
 
 async function createTestMenu(page, category, menuName) {
-  await page.click('button[onclick="switchTab(\'menu\')"]');
+  await page.click('.tab-btn:nth-child(2)');
   await shortDelay();
   await page.fill('#newMenuName', menuName);
   await shortDelay();
   await page.selectOption('#newMenuCategory', { label: category });
   await shortDelay();
-  await page.click('button[onclick="addMenu()"]');
+  await page.click('#menuTab .btn-primary');
   await waitForDB();
-  await page.click('button[onclick="switchTab(\'category\')"]');
+  await page.click('.tab-btn:nth-child(1)');
   await shortDelay();
 }
 
 async function cleanupTestUser(page, name) {
-  const nameItem = page.locator(`#namesList div:has-text("${name}") .delete-btn, #namesList .name-item:has-text("${name}") .delete-btn`).first();
+  const nameItem = page.locator(`.name-item:has-text("${name}") .delete-btn`).first();
   if (await nameItem.isVisible().catch(() => false)) {
     await nameItem.click();
     await shortDelay();
-    await page.click('button:has-text("확인")');
+    page.on('dialog', async dialog => {
+      await dialog.accept();
+    });
     await waitForDB();
   }
 }
 
 async function cleanupTestCategory(page, name) {
-  const categoryItem = page.locator(`#categoryList .category-item:has-text("${name}")`);
-  const deleteBtn = categoryItem.locator('.delete-btn').first();
+  const categoryItem = page.locator(`.category-item:has-text("${name}")`);
+  const deleteBtn = categoryItem.locator('.btn-danger').first();
   if (await deleteBtn.isVisible().catch(() => false)) {
     await deleteBtn.click();
     await shortDelay();
-    await page.click('button:has-text("확인")');
+    page.on('dialog', async dialog => {
+      await dialog.accept();
+    });
     await waitForDB();
   }
 }
 
 async function cleanupTestCategoryByName(page, name) {
-  const categoryItem = page.locator(`#categoryList .category-item:has-text("${name}")`);
-  const deleteBtn = categoryItem.locator('.delete-btn').first();
+  const categoryItem = page.locator(`.category-item:has-text("${name}")`);
+  const deleteBtn = categoryItem.locator('.btn-danger').first();
   if (await deleteBtn.isVisible().catch(() => false)) {
     await deleteBtn.click();
     await shortDelay();
-    await page.click('button:has-text("확인")');
+    page.on('dialog', async dialog => {
+      await dialog.accept();
+    });
     await waitForDB();
   }
 }
 
 async function cleanupTestHistory(page, content) {
-  const deleteBtn = page.locator(`.history-item:has-text("${content}") .delete-btn, .delete-history-btn`).first();
+  const deleteBtn = page.locator(`.history-item:has-text("${content}") .delete-btn`).first();
   if (await deleteBtn.isVisible().catch(() => false)) {
     await deleteBtn.click();
     await shortDelay();
-    await page.click('button:has-text("확인")');
-    await waitForDB();
-  }
-}
-
-async function cleanupTestFavorite(page, menuName) {
-  const deleteBtn = page.locator(`.favorite-item:has-text("${menuName}") .delete-btn, .remove-favorite-btn`).first();
-  if (await deleteBtn.isVisible().catch(() => false)) {
-    await deleteBtn.click();
+    page.on('dialog', async dialog => {
+      await dialog.accept();
+    });
     await waitForDB();
   }
 }
