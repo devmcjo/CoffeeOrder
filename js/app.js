@@ -1161,27 +1161,9 @@ function updateTempControlState(wrapper, menuName, temp) {
  * @returns {string} 온도 제한 값: "both" | "ice_only" | "hot_only"
  */
 function getTemperatureLimit(menuName, category, menuItem) {
-    // 1. DB에서 temperature 필드가 있으면 우선 사용
+    // DB에서 temperature 필드 사용
     if (menuItem && menuItem.temperature) {
         return menuItem.temperature;
-    }
-
-    // 2. Fallback: 카테고리/이름 기반 판단 (DB 마이그레이션 전용)
-    if (category) {
-        // ICE Only 카테고리
-        if (['에이드&주스', '스무디&프라페'].includes(category)) {
-            return 'ice_only';
-        }
-        // 아이스 티
-        if (category === '티' && menuName.includes('아이스')) {
-            return 'ice_only';
-        }
-    }
-
-    // ICE Only 메뉴 (이름 포함 체크 - 디카페인 고려)
-    const iceOnlyKeywords = ['메가리카노', '할메가커피', '왕메가헛개리카노', '왕메가카페라떼', '딸기라떼', '오레오초코'];
-    if (iceOnlyKeywords.some(keyword => menuName.includes(keyword))) {
-        return 'ice_only';
     }
 
     // 기본값: both

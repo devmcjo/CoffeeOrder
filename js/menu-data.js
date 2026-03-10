@@ -20,11 +20,11 @@
 
 const MENU_DATA = [
     // 1. 커피 (Coffee) - HOT/ICE 가능
-    { name: "아메리칸", category: "커피", temperature: "both" },
-    { name: "메가리칸", category: "커피", temperature: "ice_only" },
-    { name: "헤이즐넛아메리칸", category: "커피", temperature: "both" },
-    { name: "바닐라아메리칸", category: "커피", temperature: "both" },
-    { name: "꿀아메리칸", category: "커피", temperature: "both" },
+    { name: "아메리카노", category: "커피", temperature: "both" },
+    { name: "메가리카노", category: "커피", temperature: "ice_only" },
+    { name: "헤이즐넛아메리카노", category: "커피", temperature: "both" },
+    { name: "바닐라아메리카노", category: "커피", temperature: "both" },
+    { name: "꿀아메리카노", category: "커피", temperature: "both" },
     { name: "카페라떼", category: "커피", temperature: "both" },
     { name: "카푸치노", category: "커피", temperature: "both" },
     { name: "바닐라라떼", category: "커피", temperature: "both" },
@@ -41,8 +41,8 @@ const MENU_DATA = [
 
     // 2. 디카페인 (Decaf) - HOT/ICE 가능
     // (모든 커피 메뉴의 디카페인 버전)
-    { name: "디카페인 아메리칸", category: "디카페인", temperature: "both" },
-    { name: "디카페인 메가리칸", category: "디카페인", temperature: "ice_only" },
+    { name: "디카페인 아메리카노", category: "디카페인", temperature: "both" },
+    { name: "디카페인 메가리카노", category: "디카페인", temperature: "ice_only" },
     { name: "디카페인 카페라떼", category: "디카페인", temperature: "both" },
     { name: "디카페인 바닐라라떼", category: "디카페인", temperature: "both" },
     { name: "디카페인 헤이즐넛라떼", category: "디카페인", temperature: "both" },
