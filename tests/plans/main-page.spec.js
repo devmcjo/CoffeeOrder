@@ -699,13 +699,13 @@ test.describe('메인 화면 테스트', () => {
   test('TC-MAIN-043: 구매 이력 외부 클릭 닫기', async ({ page }) => {
     await page.click('footer a[onclick*="openHistoryPopup"]');
     await shortDelay();
-    // ESC 키로 닫기 시도
-    await page.keyboard.press('Escape');
-    await shortDelay();
-    // ESC로 닫히거나 닫히지 않을 수 있음 - 팝업 외부 클릭으로 대체
+    // 모달 콘텐츠 외부(배경) 클릭 - 화면 좌상단 모서리 (모달 콘텐츠 바깥)
     await page.click('#historyPopupModal', { position: { x: 10, y: 10 } });
     await shortDelay();
-    expect(true).toBeTruthy();
+    // 모달이 닫혔는지 확인 (display: none 상태)
+    const modal = page.locator('#historyPopupModal');
+    const isVisible = await modal.isVisible().catch(() => false);
+    expect(isVisible).toBeFalsy();
   });
 
   /**
