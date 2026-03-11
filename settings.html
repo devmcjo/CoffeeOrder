@@ -790,12 +790,26 @@
                     }
                 }
 
-                // 매니저 생성 (manager{N} 형식)
+                // 매니저 생성 (빈 번호 우선 채우기)
                 const managersRef = getRef('accounts/managers');
                 const managersSnapshot = await managersRef.once('value');
                 const existingManagers = managersSnapshot.val() || {};
-                const managerCount = Object.keys(existingManagers).length;
-                const newKey = `manager${managerCount + 1}`;
+
+                // 현재 사용 중인 번호들 수집
+                const usedNumbers = new Set();
+                Object.keys(existingManagers).forEach(key => {
+                    const match = key.match(/^manager(\d+)$/);
+                    if (match) {
+                        usedNumbers.add(parseInt(match[1], 10));
+                    }
+                });
+
+                // 빈 번호 찾기 (1부터 시작)
+                let newNum = 1;
+                while (usedNumbers.has(newNum)) {
+                    newNum++;
+                }
+                const newKey = `manager${newNum}`;
 
                 await managersRef.child(newKey).set({
                     id: id,

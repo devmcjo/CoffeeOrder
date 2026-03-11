@@ -2,7 +2,7 @@
  * 메가커피 메뉴 데이터 (2026.03.10 업데이트 - temperature 필드 추가)
  * - ICE/HOT 메뉴 통합 (단일 메뉴접 사용, UI에서 옵션 선택)
  * - temperature 필드 추가: "both" | "ice_only" | "hot_only"
- * - ICE Only: 에이드&주스, 스무디&프라페, 특정 메뉴(메가리칸 등)
+ * - ICE Only: 에이드&주스, 스무디&프라페, 특정 메뉴(메가리카노 등)
  * - HOT Only: 현재 없음 (향후 확장용)
  *
  * [중요] 이 파일은 평소에는 사용되지 않습니다! (2026.02.26 DB화)
@@ -51,7 +51,7 @@ const MENU_DATA = [
     { name: "디카페인 카페모카", category: "디카페인", temperature: "both" },
     { name: "디카페인 티라미수라떼", category: "디카페인", temperature: "both" },
     { name: "디카페인 카푸치노", category: "디카페인", temperature: "both" },
-    { name: "디카페인 꿀아메리칸", category: "디카페인", temperature: "both" },
+    { name: "디카페인 꿀아메리카노", category: "디카페인", temperature: "both" },
 
     // 3. 음료 (Beverage) - 라떼, 우유 등 (HOT/ICE 가능)
     { name: "곡물라떼", category: "음료", temperature: "both" },
@@ -117,7 +117,7 @@ const MENU_DATA = [
 
     // 7. 할메가커피 - ICE Only
     { name: "할메가커피", category: "커피", temperature: "ice_only" },
-    { name: "왕메가헛개리칸", category: "커피", temperature: "ice_only" },
+    { name: "왕메가헛개리카노", category: "커피", temperature: "ice_only" },
     { name: "왕메가카페라떼", category: "커피", temperature: "ice_only" },
 ];
 
