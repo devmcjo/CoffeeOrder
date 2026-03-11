@@ -832,8 +832,8 @@
 - Local Storage 초기화됨
 
 [테스트 단계]
-1. ID: 'admin_test' 입력
-2. PW: '1' 입력
+1. ID: 'ai-agent-QA-test' 입력
+2. PW: '12' 입력
 3. "로그인" 버튼 클릭
 
 [예상결과]
@@ -1055,7 +1055,7 @@
 
 [참고]
 - 이 테스트는 관리자(admin) 권한 필요. 매니저(manager) 계정은 실행 불가
-- 자동화 테스트 계정(admin_test)은 manager 권한이므로 admin-page.spec.js에서 제외됨
+- 자동화 테스트 계정(ai-agent-QA-test)은 manager 권한이므로 admin-page.spec.js에서 제외됨
 ```
 
 #### TC-ADMIN-018-01: 테스트 메뉴 개별 삭제

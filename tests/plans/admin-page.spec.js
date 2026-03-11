@@ -19,8 +19,8 @@ const TEST_MENU3 = `${TEST_PREFIX}Menu3_${timestamp}`;
 const TEST_HISTORY = `${TEST_PREFIX}History_${timestamp}`;
 
 // 매니저 로그인 정보 (Firebase DB의 accounts/managers 참조)
-const ADMIN_ID = 'admin_test';
-const ADMIN_PW = '1';
+const ADMIN_ID = 'ai-agent-QA-test';
+const ADMIN_PW = '12';
 
 // 지연 함수
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -352,7 +352,7 @@ test.describe('관리자 페이지 테스트', () => {
   });
 
   // TC-ADMIN-017: [삭제됨] 카테고리 삭제는 관리자(admin)만 가능, 매니저 계정으로 테스트 불가
-  // 참고: 테스트 계정(admin_test)은 manager 권한이므로 카테고리 삭제 테스트는 제외
+  // 참고: 테스트 계정(ai-agent-QA-test)은 manager 권한이므로 카테고리 삭제 테스트는 제외
 
   // TC-ADMIN-018-01: 테스트 메뉴 개별 삭제
   test('TC-ADMIN-018-01: 테스트 메뉴 개별 삭제', async ({ page }) => {
